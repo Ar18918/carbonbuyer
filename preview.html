@@ -257,8 +257,9 @@ function groupSum(items,keyFn,valFn){const m={};items.forEach(i=>{const k=keyFn(
 /* ---------- Compute aggregates (mirrors backend analytics) ---------- */
 const projById=Object.fromEntries(PROJECTS.map(p=>[p.project_id,p]));
 const buyerSet={};
-FINDINGS.forEach(f=>{const b=buyerSet[f.buyer]||(buyerSet[f.buyer]={buyer:f.buyer,vol:0,ret:0,projects:new Set(),years:new Set()});b.vol+=f.vol||0;if(f.tx==="retirement")b.ret+=f.vol||0;b.projects.add(f.project_id);if(f.year)b.years.add(f.year);});
-const buyers=Object.values(buyerSet).map(b=>({...b,industry:(PROFILES[b.buyer]||{}).industry||"Other",hq:(PROFILES[b.buyer]||{}).hq||"",sbti:(PROFILES[b.buyer]||{}).sbti||"Unknown",nProjects:b.projects.size,repeat:(b.projects.size>1||b.years.size>1)})).sort((a,b)=>b.vol-a.vol);
+FINDINGS.forEach(f=>{const b=buyerSet[f.buyer]||(buyerSet[f.buyer]={buyer:f.buyer,vol:0,ret:0,projects:new Set(),years:new Set(),score:0});b.vol+=f.vol||0;if(f.tx==="retirement")b.ret+=f.vol||0;b.projects.add(f.project_id);if(f.year)b.years.add(f.year);b.score=Math.max(b.score,f.score||0);});
+const tierFromScore=s=>s>=80?"High":s>=50?"Medium":"Low";
+const buyers=Object.values(buyerSet).map(b=>({...b,industry:(PROFILES[b.buyer]||{}).industry||"Other",hq:(PROFILES[b.buyer]||{}).hq||"",sbti:(PROFILES[b.buyer]||{}).sbti||"Unknown",nProjects:b.projects.size,repeat:(b.projects.size>1||b.years.size>1),tier:tierFromScore(b.score)})).sort((a,b)=>b.vol-a.vol);
 const totalVol=buyers.reduce((s,b)=>s+b.vol,0), totalRet=buyers.reduce((s,b)=>s+b.ret,0);
 const nBuyers=buyers.length, nRepeat=buyers.filter(b=>b.repeat).length;
 const nAligned=buyers.filter(b=>b.sbti==="SBTi Aligned").length;
@@ -303,11 +304,12 @@ bars(el("industry"),indCount,"#f59e0b");
 
 /* ---------- Tables ---------- */
 function tierTag(t){const c=t==="High"?"t-high":t==="Medium"?"t-med":"t-low";return `<span class="tag ${c}">${t}</span>`;}
-el("tab-buyers").innerHTML=`<table><thead><tr><th>#</th><th>Buyer</th><th>Industry</th><th style="text-align:right">Est. Volume</th><th style="text-align:right">Projects</th><th>SBTi</th></tr></thead><tbody>`+
- buyers.map((b,i)=>`<tr><td class="num" style="color:var(--muted)">${i+1}</td><td><b>${b.buyer}</b>${b.hq?`<div style="color:var(--muted);font-size:11px">${b.hq}</div>`:""}</td><td><span class="tag t-out">${b.industry}</span></td><td class="num" style="text-align:right">${b.vol?fmtN(b.vol)+" tCO₂e":"—"}</td><td class="num" style="text-align:right">${b.nProjects}</td><td><span class="tag t-unknown">${b.sbti.replace("SBTi ","")}</span></td></tr>`).join("")+`</tbody></table>`;
+el("tab-buyers").innerHTML=`<table><thead><tr><th>#</th><th>Buyer</th><th>Industry</th><th style="text-align:right">Est. Volume</th><th style="text-align:right">Projects</th><th>Confidence</th><th>SBTi</th></tr></thead><tbody>`+
+ buyers.map((b,i)=>`<tr><td class="num" style="color:var(--muted)">${i+1}</td><td><b>${b.buyer}</b>${b.hq?`<div style="color:var(--muted);font-size:11px">${b.hq}</div>`:""}</td><td><span class="tag t-out">${b.industry}</span></td><td class="num" style="text-align:right">${b.vol?fmtN(b.vol)+" tCO₂e":"—"}</td><td class="num" style="text-align:right">${b.nProjects}</td><td title="Confidence score ${Math.round(b.score)}/100">${tierTag(b.tier)}</td><td><span class="tag t-unknown">${b.sbti.replace("SBTi ","")}</span></td></tr>`).join("")+`</tbody></table>`;
 
-el("tab-projects").innerHTML=`<table><thead><tr><th>Project ID</th><th>Name</th><th>Registry</th><th>Status</th><th>Developer</th><th>Buyers</th><th>Risks</th></tr></thead><tbody>`+
- PROJECTS.map(p=>{const nb=FINDINGS.filter(f=>f.project_id===p.project_id).length;const nr=RISKS.filter(r=>r.project_id===p.project_id).length;return `<tr><td class="mono">${p.project_id}</td><td>${p.project_name}</td><td>${p.registry}</td><td style="color:var(--muted);font-size:11.5px">${p.status}</td><td style="font-size:11.5px">${p.developer}</td><td>${nb?`<span class="tag t-high">${nb}</span>`:"—"}</td><td>${nr?`<span class="tag t-danger">${nr}</span>`:"—"}</td></tr>`;}).join("")+`</tbody></table>`;
+const humanizeRisk=c=>c.replace(/_/g," ").replace(/\b\w/g,ch=>ch.toUpperCase());
+el("tab-projects").innerHTML=`<table><thead><tr><th>Project ID</th><th>Name</th><th>Registry</th><th>Status</th><th>Developer</th><th>Buyers</th><th>Risks</th><th>Primary Risk</th></tr></thead><tbody>`+
+ PROJECTS.map(p=>{const nb=FINDINGS.filter(f=>f.project_id===p.project_id).length;const pr=RISKS.filter(r=>r.project_id===p.project_id);const nr=pr.length;const top=nr?pr.reduce((a,b)=>b.sev>a.sev?b:a):null;const prCell=top?`<span class="tag ${top.sev>=75?"t-danger":top.sev>=50?"t-med":"t-low"}" title="Severity ${top.sev}/100">${humanizeRisk(top.cat)} · ${top.sev}</span>`:'<span style="color:var(--muted)">—</span>';return `<tr><td class="mono">${p.project_id}</td><td>${p.project_name}</td><td>${p.registry}</td><td style="color:var(--muted);font-size:11.5px">${p.status}</td><td style="font-size:11.5px">${p.developer}</td><td>${nb?`<span class="tag t-high">${nb}</span>`:"—"}</td><td>${nr?`<span class="tag t-danger">${nr}</span>`:"—"}</td><td>${prCell}</td></tr>`;}).join("")+`</tbody></table>`;
 
 function sevTag(s){const c=s>=75?"t-danger":s>=50?"t-med":"t-low";const l=s>=75?"Critical":s>=50?"High":"Moderate";return `<span class="tag ${c}">${l} · ${s}</span>`;}
 el("tab-risks").innerHTML=RISKS.slice().sort((a,b)=>b.sev-a.sev).map(r=>`<div class="risk"><div class="top"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="cat">${r.cat.replace(/_/g," ")}</span>${sevTag(r.sev)}<span class="mono">${r.project_id}</span></div>${r.date?`<span style="color:var(--muted);font-size:11.5px">${r.date}</span>`:""}</div><p>${r.sum}</p><a href="${r.source}" target="_blank" rel="noreferrer">Source ↗</a></div>`).join("");
@@ -322,7 +324,7 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
 function toCsv(rows){if(!rows.length)return"";const keys=Object.keys(rows[0]);const esc=v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};return keys.join(",")+"\n"+rows.map(r=>keys.map(k=>esc(r[k])).join(",")).join("\n");}
 function save(name,csv){const b=new Blob([csv],{type:"text/csv"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
 function dl(kind){
-  if(kind==="buyers")save("buyer_intelligence.csv",toCsv(buyers.map(b=>({buyer:b.buyer,industry:b.industry,hq:b.hq,sbti:b.sbti,estimated_volume_tco2e:b.vol,projects:b.nProjects,repeat:b.repeat}))));
+  if(kind==="buyers")save("buyer_intelligence.csv",toCsv(buyers.map(b=>({buyer:b.buyer,industry:b.industry,hq:b.hq,confidence:b.tier,sbti:b.sbti,estimated_volume_tco2e:b.vol,projects:b.nProjects,repeat:b.repeat}))));
   if(kind==="mapping")save("buyer_project_mapping.csv",toCsv(FINDINGS.map(f=>({project_id:f.project_id,project:projById[f.project_id]?.project_name||"",buyer:f.buyer,role:f.role,transaction_type:f.tx,estimated_volume_tco2e:f.vol??"",year:f.year,confidence_tier:f.tier,confidence_score:f.score,source_url:f.source,evidence:f.evidence}))));
   if(kind==="risks")save("risk_flags.csv",toCsv(RISKS.map(r=>({project_id:r.project_id,category:r.cat,severity:r.sev,date:r.date||"",summary:r.sum,source_url:r.source}))));
 }

@@ -90,6 +90,38 @@ def tier_from_score(score: float) -> str:
     return "Low"
 
 
+# Human-readable labels for the AI research engine's risk-category slugs.
+RISK_CATEGORY_LABELS = {
+    "project_status": "Delivery / project status",
+    "delivery": "Delivery risk",
+    "permanence": "Permanence / reversal",
+    "reversal": "Permanence / reversal",
+    "over_crediting": "Over-crediting",
+    "additionality": "Additionality",
+    "leakage": "Leakage",
+    "integrity_concern": "Integrity concern",
+    "controversy": "Controversy",
+    "governance": "Governance",
+    "financial": "Financial / counterparty",
+    "counterparty": "Counterparty",
+    "methodology": "Methodology",
+    "measurement": "Measurement / MRV",
+    "mrv": "Measurement / MRV",
+    "social": "Social / community",
+    "community": "Social / community",
+}
+
+
+def humanize_risk(category: str | None) -> str:
+    """Turn a risk-category slug (e.g. 'over_crediting') into a readable label."""
+    if not category:
+        return "Unspecified"
+    key = category.strip().lower()
+    if key in RISK_CATEGORY_LABELS:
+        return RISK_CATEGORY_LABELS[key]
+    return key.replace("_", " ").replace("-", " ").strip().capitalize()
+
+
 _YEAR_RE = re.compile(r"(19|20)\d{2}")
 
 

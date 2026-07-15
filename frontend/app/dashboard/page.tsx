@@ -29,7 +29,7 @@ export default function DashboardPage({ searchParams }: { searchParams: SP }) {
     include_ineligible: str(searchParams.include_ineligible) === "1",
     search: str(searchParams.search),
   };
-  const model = str(searchParams.model) || "haiku";
-  const intensity = str(searchParams.intensity) || "light";
+  const model = str(searchParams.model) || "opus";
+  const intensity = str(searchParams.intensity) || "standard";
   return <Dashboard initialFilters={initialFilters} initialModel={model} initialIntensity={intensity} />;
 }

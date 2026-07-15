@@ -92,7 +92,7 @@ type ResearchUI = {
 };
 
 export function Dashboard({
-  initialFilters, initialModel = "haiku", initialIntensity = "light",
+  initialFilters, initialModel = "opus", initialIntensity = "standard",
 }: { initialFilters: ProjectFilters; initialModel?: string; initialIntensity?: string }) {
   const [facets, setFacets] = React.useState<Facets | null>(null);
   const [filters, setFilters] = React.useState<ProjectFilters>(initialFilters);
@@ -234,11 +234,9 @@ export function Dashboard({
               </span>
             </div>
             {hasSegment && (
-              <div className="flex shrink-0 flex-wrap items-center gap-2" title="Model + intensity control speed, depth and rate-limit usage">
+              <div className="flex shrink-0 flex-wrap items-center gap-2" title="Runs use Claude Opus deep research; intensity controls depth and rate-limit usage">
                 <Select value={model} onChange={(e) => setModel(e.target.value)} className="h-8 w-auto text-xs">
-                  <option value="haiku">Haiku</option>
-                  <option value="sonnet">Sonnet</option>
-                  <option value="opus">Opus</option>
+                  <option value="opus">Opus deep research</option>
                 </Select>
                 <Select value={intensity} onChange={(e) => setIntensity(e.target.value)} className="h-8 w-auto text-xs">
                   <option value="light">Light</option>

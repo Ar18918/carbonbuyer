@@ -17,7 +17,7 @@ services:
       - key: RESEARCH_AUTH_MODE
         value: api_key
       - key: RESEARCH_MODEL
-        value: claude-haiku-4-5-20251001
+        value: claude-opus-4-8
       - key: RESEARCH_AUTO_MAX_PROJECTS
         value: "10"
       - key: SEED_CSV_PATH

@@ -34,37 +34,18 @@ export const api = {
     return post<AnalyzeResponse>(`/research/analyze${q ? `?${q}` : ""}`, filters);
   },
   getRun: (id: number) => get<ResearchRunOut>(`/research/runs/${id}`),
-  exportUrl: (kind: "buyers" | "projects" | "buyer-project-mapping", filters: ProjectFilters) => ({
-    url: `${BASE}/exports/${kind}.csv`,
-    filters,
-  }),
-  execSummaryUrl: `${BASE}/exports/executive-summary.md`,
 };
 
-// Trigger a browser download of a POST CSV endpoint.
-export async function downloadCsv(kind: string, filters: ProjectFilters, filename: string) {
-  const res = await fetch(`${BASE}/exports/${kind}.csv`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(filters),
-  });
-  const blob = await res.blob();
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-export async function downloadText(path: string, filters: ProjectFilters, filename: string) {
+// Trigger a browser download from any POST endpoint that returns a binary file
+// (XLSX datasets, the branded PDF executive summary). `path` is relative to BASE.
+export async function downloadBlob(path: string, filters: ProjectFilters, filename: string) {
   const res = await fetch(`${BASE}${path}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(filters),
   });
-  const text = await res.text();
-  const blob = new Blob([text], { type: "text/markdown" });
+  if (!res.ok) throw new Error(`${path} failed: ${res.status}`);
+  const blob = await res.blob();
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;

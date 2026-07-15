@@ -30,8 +30,8 @@ export default function Landing() {
   const [rr, setRr] = React.useState("");
   const [vintage, setVintage] = React.useState("");
   const [includeIneligible, setIncludeIneligible] = React.useState(false);
-  const [model, setModel] = React.useState("haiku");
-  const [intensity, setIntensity] = React.useState("light");
+  const [model, setModel] = React.useState("opus");
+  const [intensity, setIntensity] = React.useState("standard");
 
   React.useEffect(() => {
     api.facets().then(setFacets).catch(() => {});
@@ -87,9 +87,7 @@ export default function Landing() {
             <div>
               <Label>Research model</Label>
               <Select value={model} onChange={(e) => setModel(e.target.value)}>
-                <option value="haiku">Haiku — fastest, lightest on limits</option>
-                <option value="sonnet">Sonnet — balanced (recommended)</option>
-                <option value="opus">Opus — deepest, heaviest on limits</option>
+                <option value="opus">Opus — deep research (identifies the real buyers)</option>
               </Select>
             </div>
             <div>
@@ -101,7 +99,7 @@ export default function Landing() {
               </Select>
             </div>
           </div>
-          <p className="mt-2 text-xs text-muted-foreground">Model + intensity control speed, depth and how hard each run hits your Claude rate limits.</p>
+          <p className="mt-2 text-xs text-muted-foreground">Runs use Claude Opus deep research. Intensity controls how many projects are analysed and how hard each run hits your Claude rate limits.</p>
 
           <details className="mt-4">
             <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Optional filters</summary>

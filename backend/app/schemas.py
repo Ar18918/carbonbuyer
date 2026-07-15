@@ -44,6 +44,8 @@ class ProjectOut(BaseModel):
     is_eligible: bool
     risk_count: int = 0
     buyer_count: int = 0
+    primary_risk: str | None = None            # highest-severity researched risk category (Malawi/India seeded)
+    primary_risk_severity: float | None = None
 
 
 class BuyerLinkOut(BaseModel):
@@ -90,6 +92,8 @@ class BuyerOut(BaseModel):
     total_repeat_volume: float
     repeat_buyer_score: float
     is_repeat_buyer: bool
+    confidence_tier: str = "Low"       # best evidence tier across this buyer's links in the segment
+    confidence_score: float = 0.0
 
 
 class RiskFlagOut(BaseModel):

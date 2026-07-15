@@ -38,6 +38,8 @@ export interface ProjectOut {
   is_eligible: boolean;
   risk_count: number;
   buyer_count: number;
+  primary_risk?: string | null;
+  primary_risk_severity?: number | null;
 }
 
 export interface BuyerOut {
@@ -65,6 +67,8 @@ export interface BuyerOut {
   total_repeat_volume: number;
   repeat_buyer_score: number;
   is_repeat_buyer: boolean;
+  confidence_tier: string;
+  confidence_score: number;
 }
 
 export interface RiskFlagOut {

@@ -10,6 +10,7 @@ from collections import defaultdict
 
 from sqlalchemy.orm import Session, joinedload
 
+from app.constants import humanize_risk, tier_from_score
 from app.db.models import BuyerProjectLink, Project, RiskFlag
 from app.schemas import (
     BuyerOut, DashboardResponse, KPIs, NameValue, NameValue2, ProjectFilters,
@@ -44,10 +45,11 @@ def build_dashboard(db: Session, f: ProjectFilters) -> DashboardResponse:
         b = l.buyer
         agg = by_buyer.setdefault(b.id, {
             "buyer": b, "vol": 0.0, "ret": 0.0, "projects": set(), "years": set(),
-            "countries": set(), "types": set(),
+            "countries": set(), "types": set(), "conf": 0.0,
         })
         agg["vol"] += l.estimated_volume_tco2e or 0.0
         agg["ret"] += l.retirement_volume_tco2e or 0.0
+        agg["conf"] = max(agg["conf"], l.confidence_score or 0.0)  # best evidence tier for this buyer
         agg["projects"].add(l.project_id)
         if l.purchase_year:
             agg["years"].add(l.purchase_year)
@@ -76,6 +78,7 @@ def build_dashboard(db: Session, f: ProjectFilters) -> DashboardResponse:
             repeat_purchase_count=max(n_proj - 1, 0) if is_repeat else 0,
             total_repeat_volume=round(agg["vol"], 2) if is_repeat else 0.0,
             repeat_buyer_score=b.repeat_buyer_score, is_repeat_buyer=is_repeat,
+            confidence_score=round(agg["conf"], 1), confidence_tier=tier_from_score(agg["conf"]),
         ))
 
     buyer_rows.sort(key=lambda x: x.total_estimated_volume, reverse=True)
@@ -132,18 +135,27 @@ def build_dashboard(db: Session, f: ProjectFilters) -> DashboardResponse:
     for l in links:
         buyercount_by_proj[l.project_id] += 1
     risks = db.query(RiskFlag).filter(RiskFlag.project_id.in_(pid_set)).all() if pid_set else []
+    top_risk_by_proj: dict[int, RiskFlag] = {}   # highest-severity researched risk per project
     for rk in risks:
         risk_by_proj[rk.project_id] += 1
+        cur = top_risk_by_proj.get(rk.project_id)
+        if cur is None or (rk.severity_score or 0) > (cur.severity_score or 0):
+            top_risk_by_proj[rk.project_id] = rk
 
-    project_out = [ProjectOut(
-        id=p.id, project_id=p.project_id, project_name=p.project_name, registry=p.registry,
-        voluntary_status=p.voluntary_status, scope=p.scope, type=p.type,
-        reduction_removal=p.reduction_removal, methodology=p.methodology, region=p.region,
-        country=p.country, state=p.state, developer=p.developer, credits_issued=p.credits_issued,
-        credits_retired=p.credits_retired, credits_remaining=p.credits_remaining,
-        first_vintage_year=p.first_vintage_year, is_eligible=p.is_eligible,
-        risk_count=risk_by_proj.get(p.id, 0), buyer_count=buyercount_by_proj.get(p.id, 0),
-    ) for p in projects]
+    project_out = []
+    for p in projects:
+        top = top_risk_by_proj.get(p.id)
+        project_out.append(ProjectOut(
+            id=p.id, project_id=p.project_id, project_name=p.project_name, registry=p.registry,
+            voluntary_status=p.voluntary_status, scope=p.scope, type=p.type,
+            reduction_removal=p.reduction_removal, methodology=p.methodology, region=p.region,
+            country=p.country, state=p.state, developer=p.developer, credits_issued=p.credits_issued,
+            credits_retired=p.credits_retired, credits_remaining=p.credits_remaining,
+            first_vintage_year=p.first_vintage_year, is_eligible=p.is_eligible,
+            risk_count=risk_by_proj.get(p.id, 0), buyer_count=buyercount_by_proj.get(p.id, 0),
+            primary_risk=humanize_risk(top.risk_category) if top else None,
+            primary_risk_severity=round(top.severity_score, 1) if top else None,
+        ))
 
     return DashboardResponse(
         filters=f, kpis=kpis, buyer_count=n_buyers,

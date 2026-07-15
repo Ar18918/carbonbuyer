@@ -1,4 +1,4 @@
-import { Badge, sbtiVariant } from "@/components/ui/badge";
+import { Badge, confidenceVariant, sbtiVariant } from "@/components/ui/badge";
 import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import type { BuyerOut } from "@/lib/types";
 import { formatNumber, tCO2e } from "@/lib/format";
@@ -10,7 +10,7 @@ export function TopBuyersTable({ buyers }: { buyers: BuyerOut[] }) {
       <THead>
         <TR>
           <TH>#</TH><TH>Buyer</TH><TH>Industry</TH><TH className="text-right">Est. Volume</TH>
-          <TH className="text-right">Retired</TH><TH className="text-right">Projects</TH><TH>SBTi</TH>
+          <TH className="text-right">Retired</TH><TH className="text-right">Projects</TH><TH>Confidence</TH><TH>SBTi</TH>
         </TR>
       </THead>
       <TBody>
@@ -25,6 +25,7 @@ export function TopBuyersTable({ buyers }: { buyers: BuyerOut[] }) {
             <TD className="text-right tabular-nums">{tCO2e(b.total_estimated_volume)}</TD>
             <TD className="text-right tabular-nums">{tCO2e(b.total_retired_volume)}</TD>
             <TD className="text-right tabular-nums">{b.num_projects}</TD>
+            <TD><Badge variant={confidenceVariant(b.confidence_tier)} title={`Confidence score ${Math.round(b.confidence_score)}/100`}>{b.confidence_tier}</Badge></TD>
             <TD><Badge variant={sbtiVariant(b.sbti_alignment)}>{b.sbti_alignment.replace("SBTi ", "")}</Badge></TD>
           </TR>
         ))}
