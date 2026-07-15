@@ -36,8 +36,7 @@ services:
     dockerfilePath: ./frontend/Dockerfile
     dockerContext: ./frontend
     envVars:
+      # Full public URL of the backend service (fromService `host` omits the .onrender.com suffix).
+      # If you rename/redeploy the backend to a different URL, update this value.
       - key: BACKEND_URL
-        fromService:
-          type: web
-          name: cbi-backend
-          property: host   # runtime proxy (app/api/[...path]/route.ts) prepends https://
+        value: https://cbi-backend-s56a.onrender.com
