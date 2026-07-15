@@ -1,33 +1,33 @@
-// Brand-neutral, colourblind-aware categorical palette (works in light + dark).
+// Xynteo brand-led, colourblind-aware categorical palette (works in light + dark).
 export const PALETTE = [
-  "#14b8a6", // teal
-  "#3b82f6", // blue
+  "#0A5AD7", // Xynteo blue
+  "#2DAFE6", // Xynteo light blue
+  "#00C873", // Xynteo green
+  "#FF0064", // Xynteo magenta
+  "#0E3A66", // navy tint
   "#f59e0b", // amber
   "#8b5cf6", // violet
-  "#06b6d4", // cyan
-  "#84cc16", // lime
-  "#ec4899", // pink
-  "#ef4444", // red
   "#0ea5e9", // sky
+  "#14b8a6", // teal
   "#a3a3a3", // neutral
 ];
 
 export const SEMANTIC = {
-  retired: "#10b981",
-  nonRetired: "#f97316",
-  primary: "#0f766e",
+  retired: "#00C873",     // Xynteo green
+  nonRetired: "#f97316",  // caution orange
+  primary: "#0A5AD7",     // Xynteo blue
   oneTime: "#94a3b8",
-  repeat: "#14b8a6",
+  repeat: "#2DAFE6",      // Xynteo light blue
 };
 
 export const SBTI_COLORS: Record<string, string> = {
-  "SBTi Aligned": "#10b981",
-  "Not SBTi Aligned": "#f43f5e",
+  "SBTi Aligned": "#00C873",
+  "Not SBTi Aligned": "#FF0064",
   Unknown: "#94a3b8",
 };
 
 export const CONFIDENCE_COLORS: Record<string, string> = {
-  High: "#10b981",
+  High: "#00C873",
   Medium: "#f59e0b",
   Low: "#94a3b8",
 };

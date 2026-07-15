@@ -6,13 +6,14 @@
 <title>Carbon Credit Buyer Intelligence — Malawi · Afforestation/Reforestation</title>
 <style>
   :root{
-    --bg:#f5f8fa;--fg:#0f172a;--card:#fff;--muted:#64748b;--border:#e2e8f0;
-    --primary:#0f766e;--primary-soft:#0f766e18;
-    --c1:#14b8a6;--c2:#3b82f6;--c3:#f59e0b;--c4:#8b5cf6;--c5:#06b6d4;--c6:#84cc16;--c7:#ec4899;--c8:#ef4444;--c9:#0ea5e9;--c10:#a3a3a3;
-    --pos:#10b981;--neg:#f97316;--unknown:#94a3b8;--danger:#f43f5e;--amber:#f59e0b;
+    --navy:#001E3C;
+    --bg:#f5f8fa;--fg:#0f2237;--card:#fff;--muted:#5b6b7d;--border:#e2e8f0;
+    --primary:#0A5AD7;--primary-soft:#0A5AD714;
+    --c1:#0A5AD7;--c2:#2DAFE6;--c3:#00C873;--c4:#FF0064;--c5:#0E3A66;--c6:#f59e0b;--c7:#8b5cf6;--c8:#0ea5e9;--c9:#14b8a6;--c10:#a3a3a3;
+    --pos:#00C873;--neg:#f97316;--unknown:#94a3b8;--danger:#FF0064;--amber:#f59e0b;
   }
   @media (prefers-color-scheme: dark){
-    :root{--bg:#0b1220;--fg:#e2e8f0;--card:#111a2b;--muted:#94a3b8;--border:#1e293b;--primary:#14b8a6;--primary-soft:#14b8a622;}
+    :root{--navy:#04101f;--bg:#0b1220;--fg:#e2e8f0;--card:#111a2b;--muted:#94a3b8;--border:#1e293b;--primary:#2DAFE6;--primary-soft:#2DAFE622;}
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;}
@@ -59,8 +60,8 @@
   .t-unknown{background:#94a3b822;color:var(--muted)}
   .t-low{background:#94a3b822;color:var(--muted)}
   .t-med{background:#f59e0b22;color:#b45309}
-  .t-high{background:#10b98122;color:#047857}
-  .t-danger{background:#f43f5e22;color:#be123c}
+  .t-high{background:#00C87322;color:#00794a}
+  .t-danger{background:#FF006422;color:#c20050}
   .num{font-variant-numeric:tabular-nums}
   .risk{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;background:var(--card)}
   .risk .top{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
@@ -79,13 +80,34 @@
   .tab{border:0;background:transparent;color:var(--muted);padding:6px 12px;border-radius:7px;font-size:12.5px;cursor:pointer;font-weight:600}
   .tab.active{background:var(--card);color:var(--fg)}
   footer{color:var(--muted);font-size:11.5px;text-align:center;padding:24px 0}
+  .brandbar{background:var(--navy)}
+  .brandbar-inner{max-width:1320px;margin:0 auto;padding:0 20px;height:56px;display:flex;align-items:center;gap:12px}
+  .brandbar svg{height:26px;width:auto}
+  .bb-sep{width:1px;height:20px;background:rgba(255,255,255,.25)}
+  .bb-title{color:rgba(255,255,255,.85);font-size:14px;font-weight:500;letter-spacing:-.01em}
+  .brandrule{height:3px;background:linear-gradient(90deg,#0A5AD7 0%,#2DAFE6 45%,#00C873 100%)}
+  @media(max-width:560px){.bb-sep,.bb-title{display:none}}
 </style>
 </head>
 <body>
+<div class="brandbar">
+  <div class="brandbar-inner">
+    <svg xmlns="http://www.w3.org/2000/svg" width="110" height="28" viewBox="0 0 110 28" fill="none" role="img" aria-label="Xynteo">
+      <path d="M13.3691 12.5541L16.7163 9.36623L20.0634 6.18782L16.7163 3L13.3691 6.18782L10.0317 9.36623L6.68454 6.18782L3.34715 3L0 6.18782L3.34715 9.36623L6.68454 12.5541L3.34715 15.7326L0 18.9203L3.34715 22.1081L6.68454 18.9203L10.0317 15.7326L13.3691 18.9203L16.7163 22.1081L20.0634 18.9203L16.7163 15.7326L13.3691 12.5541Z" fill="#FFF"></path>
+      <path d="M101.187 3.96875C96.3174 3.96875 92.375 7.81637 92.375 12.5562C92.375 17.296 96.3174 21.1437 101.187 21.1437C106.056 21.1437 109.999 17.296 109.999 12.5562C109.999 7.81637 106.056 3.96875 101.187 3.96875ZM101.187 16.9242C98.9327 16.9242 97.1078 14.9726 97.1078 12.5562C97.1078 10.1398 98.9327 8.18817 101.187 8.18817C103.441 8.18817 105.266 10.1398 105.266 12.5562C105.266 14.9726 103.441 16.9242 101.187 16.9242Z" fill="#FFF"></path>
+      <path d="M57.4688 13.0766V10.0561C57.4688 7.54679 55.8684 3.96875 51.1453 3.96875C48.9009 3.96875 47.359 4.87018 46.2856 6.10626V4.49845H41.5625V20.614H46.2856V11.1435C46.2856 10.4093 47.0565 8.18817 49.7791 8.18817C52.5017 8.18817 52.7457 11.1993 52.7457 11.9893V20.614H57.4688V13.0859V13.0766Z" fill="#FFF"></path>
+      <path d="M69.9866 16.7474C69.2352 17.5467 66.8932 18.16 66.8932 15.5206V8.19708H71.1577V4.49817H66.8932V0H62.1701V4.49817H59.75V8.19708H62.1701V16.5894C62.1701 18.1786 63.3508 20.9296 66.8932 21.1434C69.85 21.32 71.7432 19.7679 71.7432 19.7679L69.9866 16.7474Z" fill="#FFF"></path>
+      <path d="M34.1784 4.5L30.4994 12.9574L26.8302 4.5H21.707L27.9427 18.8311L25.6104 24.2029L29.2308 27.6509L39.2918 4.5093L34.1784 4.5Z" fill="#FFF"></path>
+      <path d="M85.6412 15.2142C84.8312 16.5525 83.4162 17.4355 81.8158 17.4355C79.708 17.4355 77.9417 15.9113 77.4148 13.8295H90.0618C90.1203 13.4112 90.1593 12.9837 90.1593 12.5562C90.1593 7.81637 86.3243 3.96875 81.5817 3.96875C76.839 3.96875 73.0039 7.81637 73.0039 12.5562C73.0039 17.296 76.9464 21.1437 81.8158 21.1437C84.5482 21.1437 86.9781 19.9355 88.598 18.0303L85.6412 15.2142ZM81.5817 7.67697C83.2796 7.67697 84.7336 8.91302 85.3484 10.6788H77.8148C78.4296 8.91302 79.8837 7.67697 81.5817 7.67697Z" fill="#FFF"></path>
+    </svg>
+    <span class="bb-sep"></span>
+    <span class="bb-title">Carbon Credit Buyer Intelligence</span>
+  </div>
+  <div class="brandrule"></div>
+</div>
 <div class="wrap">
   <header>
     <div class="brand">
-      <div class="logo">🌿</div>
       <div>
         <h1>Carbon Credit Buyer Intelligence</h1>
         <div class="sub">AI-researched buyers, SBTi &amp; risk across the voluntary carbon registries</div>

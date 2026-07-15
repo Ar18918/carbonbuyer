@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { Leaf, Info, Users, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
+import { Info, Users, Loader2, AlertTriangle, RefreshCw } from "lucide-react";
 import { api } from "@/lib/api";
 import type { AnalyzeResponse, DashboardResponse, Facets, ProjectFilters, ResearchRunOut } from "@/lib/types";
 import { Filters } from "./Filters";
@@ -10,7 +10,6 @@ import { ProjectTable } from "./ProjectTable";
 import { RiskList } from "./RiskList";
 import { DownloadCenter } from "./DownloadCenter";
 import { Card, CardContent, CardHeader, CardTitle } from "./ui/card";
-import { Select } from "./ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
 import { HBarChart, VBarChart, DonutChart, KeyedDonut, AreaLineChart } from "./charts/Charts";
 import { SEMANTIC, SBTI_COLORS } from "./charts/palette";
@@ -101,8 +100,9 @@ export function Dashboard({
   const [err, setErr] = React.useState<string | null>(null);
   const [engine, setEngine] = React.useState<{ engine_enabled: boolean; model: string } | null>(null);
   const [research, setResearch] = React.useState<ResearchUI>({ state: "idle", runId: null });
-  const [model, setModel] = React.useState(initialModel);
-  const [intensity, setIntensity] = React.useState(initialIntensity);
+  // Research always uses Opus deep research at standard intensity — no user-facing selectors.
+  const model = initialModel;
+  const intensity = initialIntensity;
   const pollRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
   // Kept in a ref so changing model/intensity never re-triggers the auto-run effect —
   // it only affects the next explicit "Re-run".
@@ -199,14 +199,11 @@ export function Dashboard({
   return (
     <div className="mx-auto max-w-[1400px] space-y-4 p-4 md:p-6">
       <header className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <a href="/" className="rounded-xl bg-primary p-2 text-primary-foreground" title="New search"><Leaf size={22} /></a>
-          <div>
-            <h1 className="text-lg font-bold tracking-tight">
-              {segLabel} · {filters.project_type || "All project types"}
-            </h1>
-            <p className="text-xs text-muted-foreground">Carbon Credit Buyer Intelligence Platform</p>
-          </div>
+        <div>
+          <h1 className="text-xl font-bold tracking-tight">
+            {segLabel} · {filters.project_type || "All project types"}
+          </h1>
+          <p className="text-xs text-muted-foreground">Buyer intelligence, SBTi alignment &amp; project risk for this market</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {engine && (
@@ -234,23 +231,14 @@ export function Dashboard({
               </span>
             </div>
             {hasSegment && (
-              <div className="flex shrink-0 flex-wrap items-center gap-2" title="Runs use Claude Opus deep research; intensity controls depth and rate-limit usage">
-                <Select value={model} onChange={(e) => setModel(e.target.value)} className="h-8 w-auto text-xs">
-                  <option value="opus">Opus deep research</option>
-                </Select>
-                <Select value={intensity} onChange={(e) => setIntensity(e.target.value)} className="h-8 w-auto text-xs">
-                  <option value="light">Light</option>
-                  <option value="standard">Standard</option>
-                  <option value="deep">Deep</option>
-                </Select>
-                <button
-                  onClick={rerun}
-                  disabled={research.state === "running" || research.state === "checking"}
-                  className="inline-flex items-center gap-1 rounded-md border border-primary/40 px-2 py-1 font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
-                >
-                  <RefreshCw size={12} className={research.state === "running" ? "animate-spin" : ""} /> {data.buyer_count > 0 ? "Re-run" : "Run research"}
-                </button>
-              </div>
+              <button
+                onClick={rerun}
+                disabled={research.state === "running" || research.state === "checking"}
+                title="Re-run Opus deep research for this market"
+                className="inline-flex shrink-0 items-center gap-1 rounded-md border border-primary/40 px-2.5 py-1.5 font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+              >
+                <RefreshCw size={12} className={research.state === "running" ? "animate-spin" : ""} /> {data.buyer_count > 0 ? "Re-run" : "Run research"}
+              </button>
             )}
           </div>
 

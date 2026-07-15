@@ -2,64 +2,84 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ------------------------------------------------------------------ */
+/* Xynteo brand palette (from xynteo.com)                              */
+/*   navy #001E3C · blue #0A5AD7 · light-blue #2DAFE6                  */
+/*   green #00C873 · magenta #FF0064                                   */
+/* ------------------------------------------------------------------ */
 :root {
   --font-sans: "Inter", system-ui, sans-serif;
   --radius: 0.75rem;
 
-  --background: 210 40% 98%;
-  --foreground: 222 47% 11%;
+  /* raw brand tokens (HSL channels) */
+  --brand-navy: 210 100% 12%;
+  --brand-blue: 217 91% 44%;
+  --brand-lightblue: 198 79% 54%;
+  --brand-green: 154 100% 39%;
+  --brand-magenta: 337 100% 50%;
+
+  --background: 210 33% 99%;
+  --foreground: 211 46% 15%;
   --card: 0 0% 100%;
-  --card-foreground: 222 47% 11%;
+  --card-foreground: 211 46% 15%;
   --muted: 210 40% 96%;
-  --muted-foreground: 215 16% 42%;
+  --muted-foreground: 214 18% 42%;
   --border: 214 32% 91%;
   --input: 214 32% 91%;
-  --ring: 173 80% 30%;
-  --primary: 173 80% 26%;          /* teal-700 — carbon/climate accent */
+  --ring: 217 91% 44%;
+  --primary: 217 91% 44%;          /* Xynteo blue */
   --primary-foreground: 0 0% 100%;
-  --accent: 168 76% 42%;
-  --accent-foreground: 222 47% 11%;
+  --accent: 198 79% 54%;           /* Xynteo light blue */
+  --accent-foreground: 210 100% 12%;
 
-  /* categorical chart palette (colourblind-aware) */
-  --c1: 173 80% 30%;   /* teal   */
-  --c2: 221 83% 53%;   /* blue   */
-  --c3: 32 95% 44%;    /* amber  */
-  --c4: 262 83% 58%;   /* violet */
-  --c5: 199 89% 42%;   /* cyan   */
-  --c6: 83 62% 40%;    /* lime   */
-  --c7: 330 81% 52%;   /* pink   */
-  --c8: 0 72% 51%;     /* red    */
+  /* categorical chart palette — brand-led, colourblind-aware */
+  --c1: 217 91% 44%;   /* blue       */
+  --c2: 198 79% 54%;   /* light blue */
+  --c3: 154 100% 39%;  /* green      */
+  --c4: 210 100% 22%;  /* navy       */
+  --c5: 337 100% 50%;  /* magenta    */
+  --c6: 32 95% 48%;    /* amber      */
+  --c7: 262 83% 62%;   /* violet     */
+  --c8: 174 72% 40%;   /* teal       */
 
-  --pos: 160 84% 32%;  /* retired / good */
+  --pos: 154 90% 34%;  /* retired / good */
   --neg: 25 90% 48%;   /* non-retired / caution */
-  --high: 160 84% 32%;
+  --high: 154 90% 34%;
   --medium: 38 92% 45%;
-  --low: 215 20% 55%;
+  --low: 214 18% 55%;
 }
 
 .dark {
-  --background: 222 47% 8%;
+  --brand-navy: 210 55% 10%;
+
+  --background: 211 55% 8%;
   --foreground: 210 40% 96%;
-  --card: 222 40% 12%;
+  --card: 211 44% 12%;
   --card-foreground: 210 40% 96%;
-  --muted: 217 33% 17%;
-  --muted-foreground: 215 20% 65%;
-  --border: 217 33% 20%;
-  --input: 217 33% 22%;
-  --ring: 168 76% 42%;
-  --primary: 168 76% 42%;
-  --primary-foreground: 222 47% 8%;
-  --accent: 173 70% 38%;
+  --muted: 213 33% 17%;
+  --muted-foreground: 214 20% 68%;
+  --border: 213 33% 22%;
+  --input: 213 33% 24%;
+  --ring: 198 79% 54%;
+  --primary: 210 90% 60%;          /* brighter blue on dark */
+  --primary-foreground: 211 55% 8%;
+  --accent: 198 79% 54%;
   --accent-foreground: 210 40% 96%;
 
-  --c1: 168 76% 45%;
-  --c2: 217 91% 65%;
-  --c3: 38 92% 55%;
-  --c4: 262 83% 70%;
-  --c5: 199 89% 55%;
-  --c6: 83 62% 55%;
-  --c7: 330 81% 65%;
-  --c8: 0 84% 65%;
+  --c1: 210 90% 62%;
+  --c2: 198 85% 60%;
+  --c3: 154 70% 50%;
+  --c4: 210 60% 55%;
+  --c5: 337 90% 66%;
+  --c6: 38 92% 58%;
+  --c7: 262 83% 72%;
+  --c8: 174 62% 52%;
+
+  --pos: 154 70% 46%;
+  --neg: 25 90% 58%;
+  --high: 154 70% 46%;
+  --medium: 38 92% 55%;
+  --low: 214 18% 60%;
 }
 
 * {
@@ -75,4 +95,17 @@ body {
 
 .card-grad {
   background-image: linear-gradient(135deg, hsl(var(--card)) 0%, hsl(var(--muted)) 140%);
+}
+
+/* Xynteo navy brand bar + vivid accent underline */
+.brand-bar {
+  background-color: hsl(var(--brand-navy));
+}
+.brand-rule {
+  background-image: linear-gradient(
+    90deg,
+    hsl(var(--brand-blue)) 0%,
+    hsl(var(--brand-lightblue)) 45%,
+    hsl(var(--brand-green)) 100%
+  );
 }

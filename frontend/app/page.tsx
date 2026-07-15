@@ -30,8 +30,9 @@ export default function Landing() {
   const [rr, setRr] = React.useState("");
   const [vintage, setVintage] = React.useState("");
   const [includeIneligible, setIncludeIneligible] = React.useState(false);
-  const [model, setModel] = React.useState("opus");
-  const [intensity, setIntensity] = React.useState("standard");
+  // Research always runs on Claude Opus deep research at standard intensity (no user-facing knobs).
+  const model = "opus";
+  const intensity = "standard";
 
   React.useEffect(() => {
     api.facets().then(setFacets).catch(() => {});
@@ -60,8 +61,8 @@ export default function Landing() {
       <div className="flex items-center gap-3">
         <div className="rounded-xl bg-primary p-2.5 text-primary-foreground"><Leaf size={26} /></div>
         <div>
-          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Carbon Credit Buyer Intelligence</h1>
-          <p className="text-sm text-muted-foreground">Choose a market to identify likely buyers, estimate volumes, and map risk.</p>
+          <h1 className="text-2xl font-bold tracking-tight md:text-3xl">Identify the buyers behind any carbon market</h1>
+          <p className="text-sm text-muted-foreground">Pick a country and project type — the engine surfaces likely buyers, volumes, SBTi alignment and risk, each with cited sources.</p>
         </div>
       </div>
 
@@ -82,24 +83,6 @@ export default function Landing() {
               </Select>
             </div>
           </div>
-
-          <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
-            <div>
-              <Label>Research model</Label>
-              <Select value={model} onChange={(e) => setModel(e.target.value)}>
-                <option value="opus">Opus — deep research (identifies the real buyers)</option>
-              </Select>
-            </div>
-            <div>
-              <Label>Research intensity</Label>
-              <Select value={intensity} onChange={(e) => setIntensity(e.target.value)}>
-                <option value="light">Light — ~5 projects, no verification</option>
-                <option value="standard">Standard — ~12 projects, verified</option>
-                <option value="deep">Deep — ~20 projects, verified + more searches</option>
-              </Select>
-            </div>
-          </div>
-          <p className="mt-2 text-xs text-muted-foreground">Runs use Claude Opus deep research. Intensity controls how many projects are analysed and how hard each run hits your Claude rate limits.</p>
 
           <details className="mt-4">
             <summary className="cursor-pointer text-xs font-medium text-muted-foreground">Optional filters</summary>
