@@ -289,7 +289,7 @@ const nAligned=buyers.filter(b=>b.sbti==="SBTi Aligned").length;
 /* ---------- Render KPIs ---------- */
 const kpis=[
  {lbl:"Total Buyers Identified",val:fmtN(nBuyers),icon:"👥"},
- {lbl:"Est. Buyer Volume (tCO₂e)",val:fmtV(totalVol),icon:"📈"},
+ {lbl:"Est. Volume · Identified Buyers (tCO₂e)",val:fmtV(totalVol),icon:"📈"},
  {lbl:"Projects Included",val:fmtN(PROJECTS.length),icon:"🗂"},
  {lbl:"Repeat Buyers",val:(nBuyers?(100*nRepeat/nBuyers).toFixed(1):"0")+"%",icon:"🔁"},
  {lbl:"SBTi-Aligned Buyers",val:(nBuyers?(100*nAligned/nBuyers).toFixed(1):"0")+"%",icon:"✅"},

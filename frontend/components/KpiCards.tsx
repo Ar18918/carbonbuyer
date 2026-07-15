@@ -22,7 +22,7 @@ export function KpiCards({ kpis }: { kpis: KPIs }) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
       <Kpi icon={<Users size={18} />} label="Total Buyers Identified" value={formatNumber(kpis.total_buyers)} />
-      <Kpi icon={<TrendingUp size={18} />} label="Est. Buyer Volume" value={`${formatVolume(kpis.total_estimated_volume)}`} sub="tCO₂e" />
+      <Kpi icon={<TrendingUp size={18} />} label="Est. Volume · Identified Buyers" value={`${formatVolume(kpis.total_estimated_volume)}`} sub="tCO₂e · summed across buyers found" />
       <Kpi icon={<Layers size={18} />} label="Projects Included" value={formatNumber(kpis.total_projects)} />
       <Kpi icon={<Repeat size={18} />} label="Repeat Buyers" value={formatPct(kpis.repeat_buyer_pct)} />
       <Kpi icon={<BadgeCheck size={18} />} label="SBTi-Aligned Buyers" value={formatPct(kpis.sbti_aligned_pct)} />

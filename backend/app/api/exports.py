@@ -184,7 +184,7 @@ def export_exec_summary(f: ProjectFilters, db: Session = Depends(get_db)):
 
     # KPI strip
     pdf.set_text_color(*ink)
-    kpis = [("Buyers", f"{k.total_buyers}"), ("Est. volume (tCO2e)", f"{k.total_estimated_volume:,.0f}"),
+    kpis = [("Buyers", f"{k.total_buyers}"), ("Est. tCO2e, identified buyers", f"{k.total_estimated_volume:,.0f}"),
             ("Projects", f"{k.total_projects}"), ("Repeat %", f"{k.repeat_buyer_pct:.0f}%"),
             ("SBTi-aligned %", f"{k.sbti_aligned_pct:.0f}%")]
     w = 182 / len(kpis)
