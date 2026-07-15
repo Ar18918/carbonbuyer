@@ -21,5 +21,8 @@ ENV NODE_ENV=production
 COPY --from=build /app/public ./public
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
+ENV HOSTNAME=0.0.0.0
 EXPOSE 3000
-CMD ["node", "server.js"]
+# Force bind to 0.0.0.0. Render injects HOSTNAME=<pod-hostname> at runtime, which Next.js standalone
+# would otherwise bind to (unreachable by Render's router -> 502). The sh -c prefix overrides it at exec.
+CMD ["sh", "-c", "HOSTNAME=0.0.0.0 node server.js"]
