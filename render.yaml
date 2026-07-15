@@ -1,0 +1,43 @@
+# Render Blueprint — deploys the platform as two always-on web services (no paid database:
+# the backend uses SQLite and re-seeds the 11,343 projects + researched market snapshots on boot).
+#
+# Deploy: push this repo to GitHub -> Render Dashboard -> New + -> Blueprint -> pick the repo ->
+# Apply. Then set ANTHROPIC_API_KEY on the cbi-backend service (it's marked sync:false = secret).
+services:
+  - type: web
+    name: cbi-backend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile.backend
+    dockerContext: .
+    healthCheckPath: /health
+    envVars:
+      - key: DATABASE_URL
+        value: sqlite:////app/cbi.db
+      - key: RESEARCH_AUTH_MODE
+        value: api_key
+      - key: RESEARCH_MODEL
+        value: claude-haiku-4-5-20251001
+      - key: RESEARCH_AUTO_MAX_PROJECTS
+        value: "10"
+      - key: SEED_CSV_PATH
+        value: /app/data/seed/projects.csv
+      - key: SEED_RESEARCH_GLOB
+        value: /app/data/seed/*_research.json
+      - key: JWT_SECRET
+        generateValue: true
+      - key: ANTHROPIC_API_KEY
+        sync: false   # set this in the Render dashboard (secret) after first deploy
+
+  - type: web
+    name: cbi-frontend
+    runtime: docker
+    plan: free
+    dockerfilePath: ./frontend/Dockerfile
+    dockerContext: ./frontend
+    envVars:
+      - key: BACKEND_URL
+        fromService:
+          type: web
+          name: cbi-backend
+          property: host   # runtime proxy (app/api/[...path]/route.ts) prepends https://

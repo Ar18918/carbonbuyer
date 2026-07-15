@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-carbon}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build: ./backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql+psycopg://postgres:postgres@db:5432/carbon}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-production}
+      BOOTSTRAP_ADMIN_EMAIL: ${BOOTSTRAP_ADMIN_EMAIL:-admin@example.com}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-changeme}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      CLAUDE_CODE_OAUTH_TOKEN: ${CLAUDE_CODE_OAUTH_TOKEN:-}
+      RESEARCH_AUTH_MODE: ${RESEARCH_AUTH_MODE:-auto}
+      RESEARCH_MODEL: ${RESEARCH_MODEL:-claude-opus-4-8}
+      WEB_SEARCH_PROVIDER: ${WEB_SEARCH_PROVIDER:-anthropic}
+      TAVILY_API_KEY: ${TAVILY_API_KEY:-}
+      SERPER_API_KEY: ${SERPER_API_KEY:-}
+      EXCEL_PATH: /data/Voluntary-Registry-Offsets-Database.xlsx
+      SEED_CSV_PATH: /data/seed/projects.csv
+      SEED_RESEARCH_PATH: /data/seed/malawi_ar_research.json
+    volumes:
+      - ./data:/data:ro
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        BACKEND_URL: http://backend:8000
+    depends_on:
+      - backend
+    environment:
+      BACKEND_URL: http://backend:8000
+    ports:
+      - "3000:3000"
+
+volumes:
+  pgdata:

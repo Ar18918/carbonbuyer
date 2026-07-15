@@ -1,0 +1,349 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Carbon Credit Buyer Intelligence — Malawi · Afforestation/Reforestation</title>
+<style>
+  :root{
+    --bg:#f5f8fa;--fg:#0f172a;--card:#fff;--muted:#64748b;--border:#e2e8f0;
+    --primary:#0f766e;--primary-soft:#0f766e18;
+    --c1:#14b8a6;--c2:#3b82f6;--c3:#f59e0b;--c4:#8b5cf6;--c5:#06b6d4;--c6:#84cc16;--c7:#ec4899;--c8:#ef4444;--c9:#0ea5e9;--c10:#a3a3a3;
+    --pos:#10b981;--neg:#f97316;--unknown:#94a3b8;--danger:#f43f5e;--amber:#f59e0b;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#0b1220;--fg:#e2e8f0;--card:#111a2b;--muted:#94a3b8;--border:#1e293b;--primary:#14b8a6;--primary-soft:#14b8a622;}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--fg);-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1320px;margin:0 auto;padding:20px;}
+  header{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:42px;height:42px;border-radius:12px;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:22px}
+  h1{font-size:19px;margin:0;letter-spacing:-.02em}
+  .sub{font-size:12px;color:var(--muted);margin-top:2px}
+  .pill{font-size:12px;color:var(--muted);border:1px solid var(--border);background:var(--card);border-radius:999px;padding:5px 12px;display:inline-flex;align-items:center;gap:7px}
+  .dot{width:8px;height:8px;border-radius:50%;background:var(--amber)}
+  .note{display:flex;gap:9px;font-size:12.5px;color:var(--muted);background:var(--primary-soft);border:1px solid var(--primary-soft);border-radius:12px;padding:12px 14px;margin:14px 0}
+  .note b{color:var(--fg)}
+  .grid{display:grid;gap:12px}
+  .kpis{grid-template-columns:repeat(5,1fr)}
+  .cards4{grid-template-columns:repeat(4,1fr)}
+  .cards2{grid-template-columns:repeat(2,1fr)}
+  @media(max-width:1000px){.kpis{grid-template-columns:repeat(2,1fr)}.cards4{grid-template-columns:repeat(2,1fr)}.cards2{grid-template-columns:1fr}}
+  @media(max-width:560px){.kpis{grid-template-columns:1fr}.cards4{grid-template-columns:1fr}}
+  .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 1px 2px rgba(15,23,42,.04)}
+  .card h3{font-size:12px;color:var(--muted);margin:0 0 2px;font-weight:600}
+  .card .hint{font-size:11px;color:var(--muted);margin:0 0 10px}
+  .kpi .val{font-size:26px;font-weight:800;letter-spacing:-.02em;margin-top:4px}
+  .kpi .lbl{font-size:11.5px;color:var(--muted);font-weight:600}
+  .kpi .icon{float:right;background:var(--primary-soft);color:var(--primary);border-radius:10px;padding:7px;font-size:15px;line-height:1}
+  .bignum{font-size:40px;font-weight:800;letter-spacing:-.03em}
+  .row{display:flex;align-items:center;gap:8px;margin:5px 0;font-size:12.5px}
+  .row .lab{width:150px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .row .track{flex:1;height:10px;background:var(--border);border-radius:6px;overflow:hidden}
+  .row .fill{height:100%;border-radius:6px}
+  .row .num{width:70px;text-align:right;font-variant-numeric:tabular-nums;color:var(--fg)}
+  .donutwrap{display:flex;align-items:center;gap:16px}
+  .donut{width:120px;height:120px;border-radius:50%;flex:none;position:relative}
+  .donut::after{content:"";position:absolute;inset:22px;border-radius:50%;background:var(--card)}
+  .legend{font-size:12px;display:flex;flex-direction:column;gap:5px}
+  .legend span{display:inline-flex;align-items:center;gap:7px}
+  .sw{width:10px;height:10px;border-radius:3px;display:inline-block}
+  table{width:100%;border-collapse:collapse;font-size:12.5px}
+  th{text-align:left;color:var(--muted);font-weight:600;font-size:11px;padding:7px 8px;border-bottom:1px solid var(--border)}
+  td{padding:8px;border-bottom:1px solid var(--border);vertical-align:top}
+  tr:last-child td{border-bottom:0}
+  .tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:11px;font-weight:600}
+  .t-out{border:1px solid var(--border);color:var(--fg)}
+  .t-unknown{background:#94a3b822;color:var(--muted)}
+  .t-low{background:#94a3b822;color:var(--muted)}
+  .t-med{background:#f59e0b22;color:#b45309}
+  .t-high{background:#10b98122;color:#047857}
+  .t-danger{background:#f43f5e22;color:#be123c}
+  .num{font-variant-numeric:tabular-nums}
+  .risk{border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:8px;background:var(--card)}
+  .risk .top{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+  .risk .cat{font-weight:600;font-size:13px;text-transform:capitalize}
+  .risk p{margin:7px 0 4px;font-size:12.5px;color:var(--muted)}
+  .risk a,.buyer-src{color:var(--primary);font-size:11.5px;text-decoration:none}
+  .risk a:hover{text-decoration:underline}
+  .mono{font-family:ui-monospace,Menlo,monospace;font-size:11px;color:var(--muted)}
+  .sec-title{font-size:14px;font-weight:700;margin:22px 0 8px}
+  .btn{border:1px solid var(--border);background:var(--card);color:var(--fg);border-radius:8px;padding:8px 12px;font-size:12.5px;cursor:pointer;font-weight:600}
+  .btn:hover{background:var(--primary-soft)}
+  select{width:100%;height:38px;border:1px solid var(--border);background:var(--card);color:var(--fg);border-radius:8px;padding:0 10px;font-size:13px}
+  .lbl2{font-size:11px;color:var(--muted);font-weight:600;display:block;margin-bottom:4px}
+  .info{border:1px solid var(--amber);background:#f59e0b18;border-radius:10px;padding:12px 14px;font-size:12.5px;color:var(--fg)}
+  .tabs{display:inline-flex;gap:4px;background:var(--border);padding:4px;border-radius:10px;margin-bottom:12px}
+  .tab{border:0;background:transparent;color:var(--muted);padding:6px 12px;border-radius:7px;font-size:12.5px;cursor:pointer;font-weight:600}
+  .tab.active{background:var(--card);color:var(--fg)}
+  footer{color:var(--muted);font-size:11.5px;text-align:center;padding:24px 0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">
+      <div class="logo">🌿</div>
+      <div>
+        <h1>Carbon Credit Buyer Intelligence</h1>
+        <div class="sub">AI-researched buyers, SBTi &amp; risk across the voluntary carbon registries</div>
+      </div>
+    </div>
+    <span class="pill"><span class="dot"></span> Offline preview</span>
+  </header>
+
+  <!-- ============ LANDING VIEW ============ -->
+  <div id="landing">
+    <div class="card" style="margin-top:16px">
+      <p style="font-size:15px;font-weight:700;margin:0 0 2px">Select a market to analyze</p>
+      <p class="hint" style="margin:0 0 14px">Choose a country and project type to identify likely buyers, estimate volumes and map risk. This offline preview ships fully-researched buyer data for the <b>Malawi · Afforestation/Reforestation</b> MVP; the full platform analyzes any of 11,343 projects and runs live AI research on any segment.</p>
+      <div class="grid cards2" style="gap:14px">
+        <div><label class="lbl2">Country</label><select id="selCountry"></select></div>
+        <div><label class="lbl2">Project Type</label><select id="selType"></select></div>
+      </div>
+      <div style="margin-top:16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+        <button class="btn" style="background:var(--primary);color:#fff;border:0" onclick="analyze()">Analyze market →</button>
+        <button class="btn" onclick="loadMVP()">✨ Try the MVP — Malawi · Afforestation/Reforestation</button>
+      </div>
+      <div id="landingMsg" style="margin-top:12px"></div>
+    </div>
+    <div class="grid cards4" style="margin-top:14px">
+      <div class="card"><h3>Real registry data</h3><p class="hint" style="margin:0">11,343 projects — Verra, Gold Standard, CAR, ACR, Isometric, ART.</p></div>
+      <div class="card"><h3>AI-researched buyers</h3><p class="hint" style="margin:0">Buyers/offtakers/funders with source links &amp; confidence scores.</p></div>
+      <div class="card"><h3>SBTi &amp; risk</h3><p class="hint" style="margin:0">SBTi alignment per buyer + project integrity red-flags.</p></div>
+      <div class="card"><h3>Exports</h3><p class="hint" style="margin:0">Buyer, project &amp; mapping CSVs + executive summary.</p></div>
+    </div>
+  </div>
+
+  <!-- ============ DASHBOARD VIEW ============ -->
+  <div id="dash" style="display:none">
+  <div style="margin-top:14px"><button class="btn" onclick="showLanding()">← New search</button></div>
+
+  <div class="note">
+    <span>ℹ️</span>
+    <span><b>Segment: Malawi · Afforestation/Reforestation.</b> All 7 projects are pre-issuance (0 credits issued/retired),
+    so buyers appear as forward purchasers / offtakers / funders rather than retirements. Every buyer and risk below carries a
+    source link and confidence score. This page renders the researched snapshot with no server — the full platform adds live
+    research on any segment, all 13 dashboards and CSV/report exports.</span>
+  </div>
+
+  <div class="grid kpis" id="kpis"></div>
+
+  <div class="grid cards4" style="margin-top:12px">
+    <div class="card kpi"><h3>Buyer Count</h3><div class="bignum" id="buyerCount">—</div></div>
+    <div class="card"><h3>Buyer Frequency</h3><div class="hint">One-time vs repeat</div><div id="freq"></div></div>
+    <div class="card"><h3>Retirement Split</h3><div class="hint">Retired vs non-retired</div><div id="split"></div></div>
+    <div class="card"><h3>SBTi Alignment</h3><div class="hint">Aligned / Not / Unknown</div><div id="sbti"></div></div>
+  </div>
+
+  <div class="grid cards2" style="margin-top:12px">
+    <div class="card"><h3>Buyer Volume by Region</h3><div id="region"></div></div>
+    <div class="card"><h3>Buyer Volume by Country</h3><div id="country"></div></div>
+    <div class="card"><h3>Buyer Volume by Reduction vs Removal</h3><div id="rr"></div></div>
+    <div class="card"><h3>Buyer Volume by Registry</h3><div id="registry"></div></div>
+    <div class="card"><h3>Vintage Activity</h3><div class="hint">Volume by project vintage</div><div id="vintage"></div></div>
+    <div class="card"><h3>Industry Segmentation</h3><div class="hint">Buyers by industry</div><div id="industry"></div></div>
+  </div>
+
+  <div class="card" style="margin-top:12px">
+    <div class="tabs">
+      <button class="tab active" data-tab="buyers">Top Buyers</button>
+      <button class="tab" data-tab="projects">Projects</button>
+      <button class="tab" data-tab="risks">Risk Flags</button>
+    </div>
+    <div id="tab-buyers"></div>
+    <div id="tab-projects" style="display:none"></div>
+    <div id="tab-risks" style="display:none"></div>
+  </div>
+
+  <div class="sec-title">Download Centre</div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap">
+    <button class="btn" onclick="dl('buyers')">⬇ Buyer Intelligence CSV</button>
+    <button class="btn" onclick="dl('mapping')">⬇ Buyer-Project Mapping CSV</button>
+    <button class="btn" onclick="dl('risks')">⬇ Risk Flags CSV</button>
+  </div>
+
+  <footer>
+    Project data aggregated from the major voluntary carbon registries (Verra, Gold Standard, CAR, ACR, Isometric, ART).
+    Buyer intelligence AI-researched with source attribution &amp; confidence scoring. SBTi enrichment complete — HSBC &amp; Mota-Engil not SBTi-aligned; others are funds/NGOs/gov without corporate targets.
+    <span style="opacity:.6">Registry compilation via the Voluntary Registry Offsets Database (CC BY 4.0).</span>
+  </footer>
+  </div><!-- /#dash -->
+</div>
+
+<script>
+/* ---------- Embedded data (researched snapshot) ---------- */
+const PROJECTS = [
+  {project_id:"GS23293",project_name:"Restore Africa: Restoring Landscapes and Livelihoods",registry:"Gold Standard",status:"Listed",region:"Sub-Saharan Africa",country:"Malawi",reduction_removal:"Mixed",developer:"Global Evergreening Alliance"},
+  {project_id:"VCS898",project_name:"Fuelling a greener future for farmers in Malawi",registry:"Verra (VCS)",status:"Late to verify",region:"Sub-Saharan Africa",country:"Malawi",reduction_removal:"Impermanent Removal",developer:"Bio Energy Resources Limited (BERL)"},
+  {project_id:"VCS4155",project_name:"Bamboo Afforestation in Malawi",registry:"Verra (VCS)",status:"Withdrawn",region:"Sub-Saharan Africa",country:"Malawi",reduction_removal:"Impermanent Removal",developer:"C-Quest Capital SG Africa Holdings"},
+  {project_id:"VCS4891",project_name:"Smallholder Reforestation in Malawi",registry:"Verra (VCS)",status:"Under development",region:"Sub-Saharan Africa",country:"Malawi",reduction_removal:"Impermanent Removal",developer:"Multiple Proponents"},
+  {project_id:"VCS5615",project_name:"Regenerative Agriculture and Forestry Technology Malawi",registry:"Verra (VCS)",status:"Under development",region:"Sub-Saharan Africa",country:"Malawi",reduction_removal:"Mixed",developer:"Bridge Carbon NBS Private Limited"},
+  {project_id:"VCS5730",project_name:"MoRe Malawi ARR Project",registry:"Verra (VCS)",status:"Under development",region:"Sub-Saharan Africa",country:"Malawi",reduction_removal:"Impermanent Removal",developer:"Mamaland Company"},
+  {project_id:"VCS5863",project_name:"One Acre Fund Munda Otsogola Program",registry:"Verra (VCS)",status:"Under validation",region:"Sub-Saharan Africa",country:"Malawi",reduction_removal:"Impermanent Removal",developer:"One Acre Fund"}
+];
+const PROFILES = {
+  "Climate Asset Management (HSBC Asset Management & Pollination JV)":{industry:"Financial Services",hq:"United Kingdom",sbti:"Unknown"},
+  "Climate Impact Partners":{industry:"Financial Services",hq:"United Kingdom",sbti:"Unknown"},
+  "HSBC (HSBC Asset Management)":{industry:"Financial Services",hq:"United Kingdom",sbti:"Not SBTi Aligned"},
+  "Pollination Group":{industry:"Financial Services",hq:"Australia",sbti:"Unknown"},
+  "TNT (TNT Post / TNT NV)":{industry:"Logistics",hq:"Netherlands",sbti:"Unknown"},
+  "FMO (Dutch Entrepreneurial Development Bank)":{industry:"Financial Services",hq:"Netherlands",sbti:"Unknown"},
+  "Temasek Holdings":{industry:"Financial Services",hq:"Singapore",sbti:"Unknown"},
+  "Pavilion Energy (Temasek subsidiary; later acquired by Shell)":{industry:"Energy",hq:"Singapore",sbti:"Unknown"},
+  "Mota-Engil (Mamaland)":{industry:"Construction",hq:"Portugal",sbti:"Not SBTi Aligned"},
+  "ICCF Group":{industry:"Nonprofit/Development",hq:"United States",sbti:"Unknown"},
+  "Trafigura":{industry:"Other",hq:"Singapore / Switzerland",sbti:"Unknown"},
+  "Press Trust":{industry:"Financial Services",hq:"Malawi",sbti:"Unknown"},
+  "Government of Malawi":{industry:"Other",hq:"Malawi",sbti:"Unknown"},
+  "Rabobank Acorn":{industry:"Financial Services",hq:"Netherlands",sbti:"Unknown"},
+  "World Resources Institute (WRI) / Land & Carbon Lab":{industry:"Nonprofit/Development",hq:"United States",sbti:"Unknown"}
+};
+const FINDINGS = [
+  {buyer:"Climate Asset Management (HSBC Asset Management & Pollination JV)",project_id:"GS23293",role:"forward_purchaser",tx:"forward_purchase",vol:null,year:"2021",tier:"Medium",score:65,source:"https://climateassetmanagement.com/insight/climate-asset-management-confirms-the-first-tranche-of-a-us150m-financing-package-to-kick-off-the-global-evergreening-alliances-nature-based-carbon-programme-in-africa/",evidence:"~US$150m financing package against the forward volume of Restore Africa credits; CAM's Nature-Based Carbon Strategy investors receive the credits."},
+  {buyer:"Climate Impact Partners",project_id:"GS23293",role:"offtaker",tx:"offtake_agreement",vol:null,year:"2023",tier:"Medium",score:60,source:"https://www.climateimpact.com/news-insights/news/partnership-global-evergreening-alliance-will-deliver-330-million-carbon-removal-programs-africa-and-asia/",evidence:"Partnership up to US$330m; CIP responsible for sale and retirement of all credits generated to its global clients."},
+  {buyer:"HSBC (HSBC Asset Management)",project_id:"GS23293",role:"investor",tx:"equity_investment",vol:null,year:"2021",tier:"Low",score:45,source:"https://climateassetmanagement.com/insight/climate-asset-management-confirms-the-first-tranche-of-a-us150m-financing-package-to-kick-off-the-global-evergreening-alliances-nature-based-carbon-programme-in-africa/",evidence:"HSBC named anchor investor across the Climate Asset Management platform financing Restore Africa."},
+  {buyer:"Pollination Group",project_id:"GS23293",role:"partner",tx:"partnership",vol:null,year:"2021",tier:"Low",score:33,source:"https://www.next-finance.net/HSBC-Pollination-Climate-Asset",evidence:"Climate-advisory co-owner of Climate Asset Management, the JV financing Restore Africa."},
+  {buyer:"TNT (TNT Post / TNT NV)",project_id:"VCS898",role:"partner",tx:"partnership",vol:null,year:"2008",tier:"Low",score:40,source:"https://www.africa-energy.com/news-centre/article/malawi-focus-tnts-jatropha-ambitions",evidence:"2008 JV with BERL (VCS898 proponent) to plant ~24m jatropha trees, driven by logistics carbon-footprint reduction."},
+  {buyer:"FMO (Dutch Entrepreneurial Development Bank)",project_id:"VCS4155",role:"funder",tx:"funding_grant",vol:null,year:"2021",tier:"Low",score:35,source:"https://www.fmo.nl/project-detail/60367",evidence:"US$6.40m facility into C-Quest Capital SG Africa Holdings (the VCS4155 developer entity), earmarked for cookstoves."},
+  {buyer:"Temasek Holdings",project_id:"VCS4155",role:"investor",tx:"equity_investment",vol:null,year:"2023",tier:"Low",score:20,source:"https://www.ccarbon.info/article/c-quest-capital-adds-temasek-and-pavilion-energy-as-anchor-investors-in-south-east-asia-to-expand-its-clean-cookstoves-program/",evidence:"US$14m anchor investment (with Pavilion Energy) in C-Quest Capital, earmarked for SE Asia cookstoves."},
+  {buyer:"Pavilion Energy (Temasek subsidiary; later acquired by Shell)",project_id:"VCS4155",role:"investor",tx:"equity_investment",vol:null,year:"2023",tier:"Low",score:26,source:"https://cquestcapital.com/latest/news-and-blogs/c-quest-capital-adds-genzero-and-pavilion-energy-as-anchor-investors-in-south-east-asia/",evidence:"Anchor investor in C-Quest Capital's SE Asia cookstove expansion. Developer-level only."},
+  {buyer:"Mota-Engil (Mamaland)",project_id:"VCS4891",role:"funder",tx:"funding_grant",vol:null,year:"2026",tier:"Low",score:20,source:"https://reddmonitor.substack.com/p/malawi-has-signed-a-40-year-contract",evidence:"Developer/upfront investor in a 550,000 ha Malawi carbon program (tied to VCS5730, adjacent lead to VCS4891)."},
+  {buyer:"ICCF Group",project_id:"VCS4891",role:"partner",tx:"partnership",vol:null,year:"2026",tier:"Low",score:12,source:"https://www.trafigura.com/news-and-insights/press-releases/2026/miombo-restoration-alliance-launches-four-large-scale-carbon-removal-projects/",evidence:"Secretariat of the Miombo Restoration Alliance; program-level partner, not a buyer."},
+  {buyer:"Trafigura",project_id:"VCS5730",role:"offtaker",tx:"offtake_agreement",vol:30000000,year:"2026",tier:"Medium",score:68,source:"https://reddmonitor.substack.com/p/malawi-has-signed-a-40-year-contract",evidence:"Exclusive 40-year right to market/sell credits from 14 Malawian forest reserves; up to $100m upfront, 30m+ removal credits."},
+  {buyer:"Press Trust",project_id:"VCS5730",role:"partner",tx:"partnership",vol:null,year:"2023",tier:"Low",score:35,source:"http://mbc.mw/govt-mamaland-press-trust-sign-carbon-trading-pact/",evidence:"COP28 (2023) carbon-trading pact signatory/broker for ~350,000 ha across five reserves."},
+  {buyer:"Government of Malawi",project_id:"VCS5730",role:"partner",tx:"partnership",vol:null,year:"2023",tier:"Low",score:30,source:"http://mbc.mw/govt-mamaland-press-trust-sign-carbon-trading-pact/",evidence:"Host/policy partner to the Mamaland concession framework; holds an unpublished revenue share."},
+  {buyer:"Rabobank Acorn",project_id:"VCS5863",role:"partner",tx:"partnership",vol:null,year:"2022",tier:"Low",score:30,source:"https://acorn.rabobank.com/en/projects/one-acre-fund-zambia/",evidence:"One Acre Fund agroforestry carbon pilot with Rabobank's Acorn (Zambia); Acorn's own registry, not Verra VCS5863."},
+  {buyer:"World Resources Institute (WRI) / Land & Carbon Lab",project_id:"VCS5863",role:"partner",tx:"partnership",vol:null,year:"2025",tier:"Low",score:15,source:"https://www.linkedin.com/posts/one-acre-fund_this-year-one-acre-fund-has-been-partnering-activity-7381706963425861633-F0LN",evidence:"Technical/MRV partner to One Acre Fund on open-source remote sensing; not a buyer."}
+];
+const RISKS = [
+  {project_id:"GS23293",cat:"project_status",sev:40,date:"2025",source:"https://www.evergreening.org/restore-africa-at-three-years-a-time-to-reflect-innovate-and-accelerate/",sum:"Pre-issuance; registration and MRV still being finalised, so all commitments are on forward/unissued credits."},
+  {project_id:"GS23293",cat:"methodology_criticism",sev:35,date:"2026",source:"https://journals.plos.org/climate/article?id=10.1371%2Fjournal.pclm.0000760",sum:"Broad criticism of over-crediting and weak additionality in agroforestry/soil-carbon credits; applied generically."},
+  {project_id:"GS23293",cat:"community_dispute",sev:30,date:"2024",source:"https://www.ncbi.nlm.nih.gov/pmc/articles/PMC12913304/",sum:"Benefit-sharing/governance risk generic to smallholder carbon programmes in Africa; a watch-item."},
+  {project_id:"VCS898",cat:"project_status",sev:60,date:null,source:"https://www.green.earth/blog/carbon-ar-afforestation-reforestation-projects-africa",sum:"Registered ~863 tCO2e/yr but pre-issuance and 'Late to verify' — heightened non-delivery risk."},
+  {project_id:"VCS898",cat:"permanence",sev:65,date:null,source:"https://pubs.acs.org/doi/10.1021/es201943v",sum:"Documented global collapse of jatropha as a biofuel/carbon feedstock undermines viability and permanence."},
+  {project_id:"VCS898",cat:"project_status",sev:55,date:null,source:"https://www.tandfonline.com/doi/pdf/10.1080/03031853.2019.1577144?needAccess=true",sum:"BERL discontinued extension/seed-buying ~2014 and its biodiesel plant stalled — continuity concerns."},
+  {project_id:"VCS898",cat:"integrity_concern",sev:40,date:null,source:"https://carbon-pulse.com/318608/",sum:"Malawi sold only a fraction of ~1.5M generated credits at ~US$1/t — weak demand and price realisation."},
+  {project_id:"VCS4155",cat:"project_status",sev:85,date:"2026-07-10",source:"https://verra.org/verra-cancels-5-million-overissued-credits-linked-to-c-quest-capital/",sum:"Withdrawn on Verra and never reached issuance; buyer intelligence limited to developer-level funders."},
+  {project_id:"VCS4155",cat:"integrity_concern",sev:90,date:"2024-06-26",source:"https://www.businesswire.com/news/home/20240626851324/en/C-Quest-Capital-Uncovers-Wrongdoing-by-Former-CEO-Kenneth-Newcombe-Takes-Decisive-Action-to-Help-Company-Fulfill-its-Critical-Mission",sum:"Developer parent C-Quest Capital disclosed over-issuance by former CEO; Verra suspended 27 projects."},
+  {project_id:"VCS4155",cat:"regulatory_investigation",sev:92,date:"2024",source:"https://www.sec.gov/enforcement-litigation/administrative-proceedings/33-11315-s",sum:"US SEC settled charges vs C-Quest ($250m offering fraud); ex-CEO criminally charged over ~$100m scheme."},
+  {project_id:"VCS4155",cat:"over_crediting",sev:88,date:"2024",source:"https://verra.org/verra-cancels-5-million-overissued-credits-linked-to-c-quest-capital/",sum:"Verra cancelled ~5M over-issued credits linked to C-Quest cookstove projects."},
+  {project_id:"VCS4155",cat:"negative_media",sev:70,date:"2024",source:"https://reddmonitor.substack.com/p/over-issuance-of-millions-of-carbon",sum:"Investigative reporting (incl. Channel 4) on illegal tree-cutting tied to C-Quest programs; NGO/media scrutiny."},
+  {project_id:"VCS4155",cat:"ngo_criticism",sev:65,date:"2024",source:"https://icvcm.org/statement-in-response-to-announcement-cquest-capital/",sum:"ICVCM public statement on C-Quest over-issuance — market-integrity concern."},
+  {project_id:"VCS4891",cat:"project_status",sev:35,date:null,source:"https://registry.verra.org/app/search/VCS/All%20Projects",sum:"Pre-issuance, 'Multiple Proponents'; may never reach validation/issuance."},
+  {project_id:"VCS4891",cat:"regulatory_investigation",sev:50,date:null,source:"https://www.investigative-malawi.org/2886/carbon-credits/",sum:"Malawi has no dedicated carbon law and 'carbon rights' are undefined — ownership/benefit-sharing risk."},
+  {project_id:"VCS4891",cat:"community_dispute",sev:55,date:null,source:"https://www.investigative-malawi.org/2886/carbon-credits/",sum:"Malawi ARR deals criticised for unpublished terms, low community share, 40-yr lock-in (adjacent deal context)."},
+  {project_id:"VCS4891",cat:"methodology_criticism",sev:30,date:null,source:"https://www.investigative-malawi.org/2886/carbon-credits/",sum:"General additionality/permanence scrutiny of Verra VM0047 ARR credits."},
+  {project_id:"VCS5615",cat:"integrity_concern",sev:62,date:"2024-10-03",source:"https://www.justice.gov/usao-sdny/pr/us-attorney-announces-criminal-charges-multi-year-fraud-scheme-market-carbon-credits",sum:"Bridge Carbon built from C-Quest Capital assets; C-Quest ex-CEO criminally indicted — lineage integrity flag."},
+  {project_id:"VCS5615",cat:"project_status",sev:45,date:null,source:"https://registry.verra.org/app/projectDetail/VCS/5615",sum:"Pre-issuance with no discoverable public project documentation — delivery-risk uncertainty."},
+  {project_id:"VCS5730",cat:"community_dispute",sev:70,date:"2026-02",source:"https://www.investigative-malawi.org/2886/carbon-credits/",sum:"Communities promised jobs/nurseries with no clarity on terms while customary reserve access may be curtailed."},
+  {project_id:"VCS5730",cat:"controversy",sev:68,date:"2026-02",source:"https://reddmonitor.substack.com/p/malawi-has-signed-a-40-year-contract",sum:"40-yr exclusive deal signed before Malawi passed carbon law; undefined rights, unpublished revenue split, no registry."},
+  {project_id:"VCS5730",cat:"negative_media",sev:55,date:"2026-02",source:"https://www.investigative-malawi.org/2886/carbon-credits/",sum:"Offtaker Trafigura carries a heavy corruption/fraud litigation record raising counterparty concerns."},
+  {project_id:"VCS5730",cat:"additionality",sev:45,date:"2026-02",source:"https://www.investigative-malawi.org/2886/carbon-credits/",sum:"General additionality/permanence concerns for large ARR removal projects; claims untested pre-issuance."},
+  {project_id:"VCS5730",cat:"project_status",sev:40,date:"2026-02",source:"https://reddmonitor.substack.com/p/malawi-has-signed-a-40-year-contract",sum:"Mapping of the Verra listing to the umbrella 550,000 ha concession contract is not clearly documented."},
+  {project_id:"VCS5863",cat:"project_status",sev:35,date:"2026-07-10",source:"https://registry.verra.org/app/search/VCS/All%20Projects",sum:"'Under validation' with no issuances/retirements — all buyer intelligence is forward-looking."},
+  {project_id:"VCS5863",cat:"permanence",sev:40,date:"2024-03",source:"https://www.focusingphilanthropy.org/wp-content/uploads/2024/03/One-Acre-Fund-Tree-Campaign-Preliminary-2023-Update-Final.pdf",sum:"One Acre Fund's own materials note its smallholder agroforestry model is early-stage with permanence to be tested."}
+];
+
+/* ---------- Helpers ---------- */
+const CAT=["#14b8a6","#3b82f6","#f59e0b","#8b5cf6","#06b6d4","#84cc16","#ec4899","#ef4444","#0ea5e9","#a3a3a3"];
+const fmtV=n=>!n?"—":Math.abs(n)>=1e6?(n/1e6).toFixed(1)+"M":Math.abs(n)>=1e3?(n/1e3).toFixed(1)+"k":Math.round(n).toLocaleString();
+const fmtN=n=>n==null?"—":Math.round(n).toLocaleString();
+const el=id=>document.getElementById(id);
+function groupSum(items,keyFn,valFn){const m={};items.forEach(i=>{const k=keyFn(i);m[k]=(m[k]||0)+(valFn(i)||0)});return Object.entries(m).map(([name,value])=>({name,value})).sort((a,b)=>b.value-a.value);}
+
+/* ---------- Compute aggregates (mirrors backend analytics) ---------- */
+const projById=Object.fromEntries(PROJECTS.map(p=>[p.project_id,p]));
+const buyerSet={};
+FINDINGS.forEach(f=>{const b=buyerSet[f.buyer]||(buyerSet[f.buyer]={buyer:f.buyer,vol:0,ret:0,projects:new Set(),years:new Set()});b.vol+=f.vol||0;if(f.tx==="retirement")b.ret+=f.vol||0;b.projects.add(f.project_id);if(f.year)b.years.add(f.year);});
+const buyers=Object.values(buyerSet).map(b=>({...b,industry:(PROFILES[b.buyer]||{}).industry||"Other",hq:(PROFILES[b.buyer]||{}).hq||"",sbti:(PROFILES[b.buyer]||{}).sbti||"Unknown",nProjects:b.projects.size,repeat:(b.projects.size>1||b.years.size>1)})).sort((a,b)=>b.vol-a.vol);
+const totalVol=buyers.reduce((s,b)=>s+b.vol,0), totalRet=buyers.reduce((s,b)=>s+b.ret,0);
+const nBuyers=buyers.length, nRepeat=buyers.filter(b=>b.repeat).length;
+const nAligned=buyers.filter(b=>b.sbti==="SBTi Aligned").length;
+
+/* ---------- Render KPIs ---------- */
+const kpis=[
+ {lbl:"Total Buyers Identified",val:fmtN(nBuyers),icon:"👥"},
+ {lbl:"Est. Buyer Volume (tCO₂e)",val:fmtV(totalVol),icon:"📈"},
+ {lbl:"Projects Included",val:fmtN(PROJECTS.length),icon:"🗂"},
+ {lbl:"Repeat Buyers",val:(nBuyers?(100*nRepeat/nBuyers).toFixed(1):"0")+"%",icon:"🔁"},
+ {lbl:"SBTi-Aligned Buyers",val:(nBuyers?(100*nAligned/nBuyers).toFixed(1):"0")+"%",icon:"✅"},
+];
+el("kpis").innerHTML=kpis.map(k=>`<div class="card kpi"><span class="icon">${k.icon}</span><div class="lbl">${k.lbl}</div><div class="val">${k.val}</div></div>`).join("");
+el("buyerCount").textContent=fmtN(nBuyers);
+
+/* ---------- Donuts ---------- */
+function donut(elm,data){
+  const tot=data.reduce((s,d)=>s+d.value,0);
+  if(!tot){elm.innerHTML='<div style="color:var(--muted);font-size:12.5px;padding:20px 0">No data for this segment</div>';return;}
+  let acc=0;const stops=data.map((d,i)=>{const from=acc/tot*360;acc+=d.value;const to=acc/tot*360;return `${d.color||CAT[i%10]} ${from}deg ${to}deg`;}).join(",");
+  const legend=data.map((d,i)=>`<span><span class="sw" style="background:${d.color||CAT[i%10]}"></span>${d.name} · ${fmtN(d.value)}</span>`).join("");
+  elm.innerHTML=`<div class="donutwrap"><div class="donut" style="background:conic-gradient(${stops})"></div><div class="legend">${legend}</div></div>`;
+}
+donut(el("freq"),[{name:"One-time",value:nBuyers-nRepeat,color:"#94a3b8"},{name:"Repeat",value:nRepeat,color:"#14b8a6"}]);
+donut(el("split"),[{name:"Retired",value:totalRet,color:"#10b981"},{name:"Non-retired",value:Math.max(totalVol-totalRet,0),color:"#f97316"}]);
+const sbtiData=[["SBTi Aligned","#10b981"],["Not SBTi Aligned","#f43f5e"],["Unknown","#94a3b8"]].map(([n,c])=>({name:n.replace("SBTi ",""),value:buyers.filter(b=>b.sbti===n).length,color:c}));
+donut(el("sbti"),sbtiData);
+
+/* ---------- Bars ---------- */
+function bars(elm,data,color){
+  if(!data.length||data.every(d=>!d.value)){elm.innerHTML='<div style="color:var(--muted);font-size:12.5px;padding:12px 0">No volume attributed in this segment</div>';return;}
+  const max=Math.max(...data.map(d=>d.value))||1;
+  elm.innerHTML=data.map((d,i)=>`<div class="row"><span class="lab" title="${d.name}">${d.name}</span><span class="track"><span class="fill" style="width:${Math.max(d.value/max*100,d.value?3:0)}%;background:${color||CAT[i%10]}"></span></span><span class="num">${fmtV(d.value)}</span></div>`).join("");
+}
+bars(el("region"),groupSum(FINDINGS,f=>projById[f.project_id]?.region||"Unknown",f=>f.vol),"#14b8a6");
+bars(el("country"),groupSum(FINDINGS,f=>projById[f.project_id]?.country||"Unknown",f=>f.vol),"#3b82f6");
+bars(el("rr"),groupSum(FINDINGS,f=>projById[f.project_id]?.reduction_removal||"Unknown",f=>f.vol),"#8b5cf6");
+bars(el("registry"),groupSum(FINDINGS,f=>projById[f.project_id]?.registry||"Unknown",f=>f.vol),"#0ea5e9");
+bars(el("vintage"),groupSum(FINDINGS,()=>"Forward / pre-issuance",f=>f.vol),"#0f766e");
+const indCount=groupSum(FINDINGS.filter((f,i,a)=>a.findIndex(x=>x.buyer===f.buyer)===i),f=>PROFILES[f.buyer]?.industry||"Other",()=>1);
+bars(el("industry"),indCount,"#f59e0b");
+
+/* ---------- Tables ---------- */
+function tierTag(t){const c=t==="High"?"t-high":t==="Medium"?"t-med":"t-low";return `<span class="tag ${c}">${t}</span>`;}
+el("tab-buyers").innerHTML=`<table><thead><tr><th>#</th><th>Buyer</th><th>Industry</th><th style="text-align:right">Est. Volume</th><th style="text-align:right">Projects</th><th>SBTi</th></tr></thead><tbody>`+
+ buyers.map((b,i)=>`<tr><td class="num" style="color:var(--muted)">${i+1}</td><td><b>${b.buyer}</b>${b.hq?`<div style="color:var(--muted);font-size:11px">${b.hq}</div>`:""}</td><td><span class="tag t-out">${b.industry}</span></td><td class="num" style="text-align:right">${b.vol?fmtN(b.vol)+" tCO₂e":"—"}</td><td class="num" style="text-align:right">${b.nProjects}</td><td><span class="tag t-unknown">${b.sbti.replace("SBTi ","")}</span></td></tr>`).join("")+`</tbody></table>`;
+
+el("tab-projects").innerHTML=`<table><thead><tr><th>Project ID</th><th>Name</th><th>Registry</th><th>Status</th><th>Developer</th><th>Buyers</th><th>Risks</th></tr></thead><tbody>`+
+ PROJECTS.map(p=>{const nb=FINDINGS.filter(f=>f.project_id===p.project_id).length;const nr=RISKS.filter(r=>r.project_id===p.project_id).length;return `<tr><td class="mono">${p.project_id}</td><td>${p.project_name}</td><td>${p.registry}</td><td style="color:var(--muted);font-size:11.5px">${p.status}</td><td style="font-size:11.5px">${p.developer}</td><td>${nb?`<span class="tag t-high">${nb}</span>`:"—"}</td><td>${nr?`<span class="tag t-danger">${nr}</span>`:"—"}</td></tr>`;}).join("")+`</tbody></table>`;
+
+function sevTag(s){const c=s>=75?"t-danger":s>=50?"t-med":"t-low";const l=s>=75?"Critical":s>=50?"High":"Moderate";return `<span class="tag ${c}">${l} · ${s}</span>`;}
+el("tab-risks").innerHTML=RISKS.slice().sort((a,b)=>b.sev-a.sev).map(r=>`<div class="risk"><div class="top"><div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap"><span class="cat">${r.cat.replace(/_/g," ")}</span>${sevTag(r.sev)}<span class="mono">${r.project_id}</span></div>${r.date?`<span style="color:var(--muted);font-size:11.5px">${r.date}</span>`:""}</div><p>${r.sum}</p><a href="${r.source}" target="_blank" rel="noreferrer">Source ↗</a></div>`).join("");
+
+/* ---------- Tabs ---------- */
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));t.classList.add("active");
+  ["buyers","projects","risks"].forEach(k=>el("tab-"+k).style.display=k===t.dataset.tab?"block":"none");
+});
+
+/* ---------- CSV downloads ---------- */
+function toCsv(rows){if(!rows.length)return"";const keys=Object.keys(rows[0]);const esc=v=>{v=v==null?"":String(v);return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;};return keys.join(",")+"\n"+rows.map(r=>keys.map(k=>esc(r[k])).join(",")).join("\n");}
+function save(name,csv){const b=new Blob([csv],{type:"text/csv"});const u=URL.createObjectURL(b);const a=document.createElement("a");a.href=u;a.download=name;a.click();URL.revokeObjectURL(u);}
+function dl(kind){
+  if(kind==="buyers")save("buyer_intelligence.csv",toCsv(buyers.map(b=>({buyer:b.buyer,industry:b.industry,hq:b.hq,sbti:b.sbti,estimated_volume_tco2e:b.vol,projects:b.nProjects,repeat:b.repeat}))));
+  if(kind==="mapping")save("buyer_project_mapping.csv",toCsv(FINDINGS.map(f=>({project_id:f.project_id,project:projById[f.project_id]?.project_name||"",buyer:f.buyer,role:f.role,transaction_type:f.tx,estimated_volume_tco2e:f.vol??"",year:f.year,confidence_tier:f.tier,confidence_score:f.score,source_url:f.source,evidence:f.evidence}))));
+  if(kind==="risks")save("risk_flags.csv",toCsv(RISKS.map(r=>({project_id:r.project_id,category:r.cat,severity:r.sev,date:r.date||"",summary:r.sum,source_url:r.source}))));
+}
+
+/* ---------- Landing / market selection ---------- */
+const COUNTRIES=["Malawi","United States","India","China","Türkiye","Mexico","Brazil","Kenya","Uganda","Rwanda","Bangladesh","South Africa","Nepal","Viet Nam","Madagascar","Nigeria","Colombia","Thailand","Burkina Faso","Indonesia","Mozambique","Tanzania","Zambia","Ethiopia","Canada","Peru","Cambodia","Ghana","Zimbabwe","Pakistan"];
+const TYPES=["Afforestation/Reforestation","REDD+","Jurisdictional REDD+","Improved Forest Management","Cookstoves","Wind","Hydropower","Solar - Centralized","Solar - Distributed","Landfill Methane","Manure Methane Digester","Biochar","Biomass","Sustainable Agriculture","Clean Water","Community Boreholes","Rice Emission Reductions","Wetland Restoration","Mine Methane Capture","Waste Recycling","Energy Efficiency","Electric Vehicles & Charging"];
+(function initLanding(){
+  const sc=el("selCountry"), st=el("selType");
+  sc.innerHTML='<option value="">All countries</option>'+COUNTRIES.map(c=>`<option>${c}</option>`).join("");
+  st.innerHTML='<option value="">All project types</option>'+TYPES.map(t=>`<option>${t}</option>`).join("");
+})();
+function showDash(){el("landing").style.display="none";el("dash").style.display="block";window.scrollTo(0,0);}
+function showLanding(){el("dash").style.display="none";el("landing").style.display="block";el("landingMsg").innerHTML="";window.scrollTo(0,0);}
+function loadMVP(){el("selCountry").value="Malawi";el("selType").value="Afforestation/Reforestation";showDash();}
+function analyze(){
+  const c=el("selCountry").value, t=el("selType").value;
+  if(c==="Malawi" && /Afforestation/.test(t)){showDash();return;}
+  const seg=(c||"All countries")+" · "+(t||"All project types");
+  el("landingMsg").innerHTML='<div class="info"><b>'+seg+'</b> isn\'t included in this offline preview. This static demo ships fully-researched buyer data for <b>Malawi · Afforestation/Reforestation</b> only.<br>To analyze <b>'+seg+'</b>, run the full platform (<code>docker compose up</code>) — it queries all 11,343 projects and can launch live AI buyer research on this segment. Explore the MVP now with the button above.</div>';
+}
+</script>
+</body>
+</html>

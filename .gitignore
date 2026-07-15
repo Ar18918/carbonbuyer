@@ -1,0 +1,24 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+
+# Node / Next
+node_modules/
+.next/
+out/
+npm-debug.log*
+
+# Env
+.env
+.env.local
+frontend/.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large source workbook (ship separately; seed CSV is committed)
+data/Voluntary-Registry-Offsets-Database.xlsx
