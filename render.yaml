@@ -26,6 +26,8 @@ services:
         value: /app/data/seed/*_research.json
       - key: SEED_REGISTRY_CSV
         value: /app/data/seed/offsetsdb_retirements.csv
+      - key: SEED_BUYER_ENRICHMENT_CSV
+        value: /app/data/seed/buyer_enrichment.csv
       - key: JWT_SECRET
         generateValue: true
       - key: ANTHROPIC_API_KEY

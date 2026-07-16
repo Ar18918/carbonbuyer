@@ -19,6 +19,23 @@ from app.schemas import (
 from app.services import filters as filter_svc
 
 
+def _role_label(transaction_type: str | None, buyer_role: str | None) -> str:
+    """Humanize how an entity participated — distinguishes actual credit users from
+    offtakers, grant-funders and investors."""
+    t, r = (transaction_type or "").lower(), (buyer_role or "").lower()
+    if "retire" in t or "retire" in r or "beneficiary" in r:
+        return "Retired credits"
+    if "offtake" in t or "forward" in t or "offtaker" in r:
+        return "Offtake"
+    if "grant" in t or "funding" in t or "funder" in r or "donor" in r:
+        return "Grant / funder"
+    if "equity" in t or "invest" in t or "investor" in r:
+        return "Investor"
+    if "purchase" in t or "spot" in t or "buyer" in r:
+        return "Purchase"
+    return "Other"
+
+
 def _nv(d: dict, top: int | None = None, reverse: bool = True) -> list[NameValue]:
     items = sorted(d.items(), key=lambda kv: kv[1], reverse=reverse)
     if top:
@@ -48,11 +65,12 @@ def build_dashboard(db: Session, f: ProjectFilters, source: str = "all") -> Dash
         b = l.buyer
         agg = by_buyer.setdefault(b.id, {
             "buyer": b, "vol": 0.0, "ret": 0.0, "projects": set(), "years": set(),
-            "countries": set(), "types": set(), "conf": 0.0,
+            "countries": set(), "types": set(), "conf": 0.0, "roles": set(),
         })
         agg["vol"] += l.estimated_volume_tco2e or 0.0
         agg["ret"] += l.retirement_volume_tco2e or 0.0
         agg["conf"] = max(agg["conf"], l.confidence_score or 0.0)  # best evidence tier for this buyer
+        agg["roles"].add(_role_label(l.transaction_type, l.buyer_role))
         agg["projects"].add(l.project_id)
         if l.purchase_year:
             agg["years"].add(l.purchase_year)
@@ -82,6 +100,10 @@ def build_dashboard(db: Session, f: ProjectFilters, source: str = "all") -> Dash
             total_repeat_volume=round(agg["vol"], 2) if is_repeat else 0.0,
             repeat_buyer_score=b.repeat_buyer_score, is_repeat_buyer=is_repeat,
             confidence_score=round(agg["conf"], 1), confidence_tier=tier_from_score(agg["conf"]),
+            roles=sorted(agg["roles"], key=lambda x: ["Retired credits", "Offtake", "Purchase",
+                                                      "Grant / funder", "Investor", "Other"].index(x)
+                         if x in ["Retired credits", "Offtake", "Purchase", "Grant / funder", "Investor", "Other"]
+                         else 9),
         ))
 
     buyer_rows.sort(key=lambda x: x.total_estimated_volume, reverse=True)

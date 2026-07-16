@@ -3,6 +3,7 @@ import { Search, SlidersHorizontal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input, Label, Select } from "@/components/ui/input";
 import { CountryMultiSelect } from "./CountryMultiSelect";
+import { MultiSelect } from "./MultiSelect";
 import type { Facets, ProjectFilters } from "@/lib/types";
 
 const CURRENT_YEAR = 2026;
@@ -37,10 +38,13 @@ export function Filters({
         </div>
         <div>
           <Label>Project Type</Label>
-          <Select value={filters.project_type ?? ""} onChange={(e) => set({ project_type: e.target.value || null })}>
-            <option value="">All types</option>
-            {facets?.types.map((t) => <option key={t} value={t}>{t}</option>)}
-          </Select>
+          <MultiSelect
+            options={facets?.types ?? []}
+            value={filters.project_types ?? (filters.project_type ? [filters.project_type] : [])}
+            onChange={(v) => set({ project_types: v.length ? v : null, project_type: null })}
+            allLabel="All types"
+            addLabel="Add another type…"
+          />
         </div>
         <div>
           <Label>Registry</Label>

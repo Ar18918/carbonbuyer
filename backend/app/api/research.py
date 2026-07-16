@@ -67,10 +67,12 @@ def analyze(f: ProjectFilters, background: BackgroundTasks, force: bool = Query(
         pass  # wired via router-level dependency in production; left open by default here.
 
     seg_countries = f.countries or ([f.country] if f.country else [])
-    if not seg_countries or not f.project_type:
+    seg_types = f.project_types or ([f.project_type] if f.project_type else [])
+    if not seg_countries or not seg_types:
         return {"status": "needs_segment", "run_id": None,
                 "note": "Select at least one country and a project type to run AI buyer research."}
     country_label = ", ".join(seg_countries)
+    type_label = ", ".join(seg_types)
 
     preset = INTENSITY.get(intensity, INTENSITY["standard"])
     model = model if model in ALLOWED_MODELS else None  # None -> engine default (RESEARCH_MODEL)
@@ -90,7 +92,7 @@ def analyze(f: ProjectFilters, background: BackgroundTasks, force: bool = Query(
             return {"status": "ready", "run_id": None, "note": None}
 
     in_flight = (db.query(ResearchRun)
-                 .filter(ResearchRun.country == country_label, ResearchRun.project_type == f.project_type,
+                 .filter(ResearchRun.country == country_label, ResearchRun.project_type == type_label,
                          ResearchRun.status.in_(["queued", "running"]))
                  .order_by(ResearchRun.id.desc()).first())
     if in_flight is not None:
@@ -100,10 +102,10 @@ def analyze(f: ProjectFilters, background: BackgroundTasks, force: bool = Query(
         return {"status": "disabled", "run_id": None,
                 "note": "Live research requires ANTHROPIC_API_KEY on the backend."}
 
-    req = ResearchRequest(country=country_label, project_type=f.project_type, filters=f,
+    req = ResearchRequest(country=country_label, project_type=type_label, filters=f,
                           max_projects=preset["max_projects"], model=model,
                           verify=preset["verify"], max_turns=preset["max_turns"])
-    run = ResearchRun(country=country_label, project_type=f.project_type, params=f.model_dump(),
+    run = ResearchRun(country=country_label, project_type=type_label, params=f.model_dump(),
                       status="queued", model=(model or engine.model))
     db.add(run)
     db.commit()

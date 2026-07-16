@@ -22,7 +22,9 @@ def query_projects(db: Session, f: ProjectFilters) -> Query:
         q = q.filter(Project.country.in_(f.countries))
     elif f.country:
         q = q.filter(Project.country == f.country)
-    if f.project_type:
+    if f.project_types:
+        q = q.filter(Project.type.in_(f.project_types))
+    elif f.project_type:
         q = q.filter(Project.type == f.project_type)
     if f.registry:
         q = q.filter(Project.registry == f.registry)

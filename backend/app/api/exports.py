@@ -159,7 +159,9 @@ def export_exec_summary(f: ProjectFilters, db: Session = Depends(get_db)):
 
     dash = analytics_svc.build_dashboard(db, f)
     k = dash.kpis
-    seg = f"{f.country or 'All countries'} - {f.project_type or 'All project types'}"
+    seg_c = ", ".join(f.countries) if f.countries else (f.country or "All countries")
+    seg_t = ", ".join(f.project_types) if f.project_types else (f.project_type or "All project types")
+    seg = f"{seg_c} - {seg_t}"
 
     def rgb(hexs):
         return tuple(int(hexs[i:i + 2], 16) for i in (0, 2, 4))

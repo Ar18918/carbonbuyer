@@ -183,7 +183,8 @@ export function Dashboard({
 
   // Manual re-run (force a fresh research pass even if research findings already exist).
   const rerun = React.useCallback(async () => {
-    if (!filters.country || !filters.project_type) return;
+    const hasSeg = (filters.countries?.length || filters.country) && (filters.project_types?.length || filters.project_type);
+    if (!hasSeg) return;
     setResearch({ state: "checking", runId: null });
     try {
       const res = await api.analyze(filters, { force: true, ...settingsRef.current });
@@ -210,7 +211,8 @@ export function Dashboard({
   }, [run, initialFilters, initialSource, stopPoll]);
 
   const segLabel = (filters.countries?.length ? filters.countries.join(", ") : filters.country) || "All countries";
-  const hasSegment = !!(filters.countries?.length || filters.country) && !!filters.project_type;
+  const typeLabel = (filters.project_types?.length ? filters.project_types.join(", ") : filters.project_type) || "All project types";
+  const hasSegment = !!(filters.countries?.length || filters.country) && !!(filters.project_types?.length || filters.project_type);
   const registryMode = source === "registry";
 
   return (
@@ -218,7 +220,7 @@ export function Dashboard({
       <header className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-xl font-bold tracking-tight">
-            {segLabel} · {filters.project_type || "All project types"}
+            {segLabel} · {typeLabel}
           </h1>
           <p className="text-xs text-muted-foreground">Buyer intelligence, SBTi alignment &amp; project risk for this market</p>
         </div>
@@ -259,9 +261,8 @@ export function Dashboard({
               <Info size={14} className="mt-0.5 shrink-0 text-primary" />
               {registryMode ? (
                 <span>
-                  <b className="text-foreground">Registered buyers.</b> Organisations that have <b>retired</b> carbon credits issued by these projects, taken from public registry retirement records (harmonized by{" "}
-                  <a className="underline" href="https://carbonplan.org/research/offsets-db" target="_blank" rel="noreferrer">CarbonPlan OffsetsDB</a>, CC BY 4.0).
-                  This is the <b>retirement beneficiary</b> — the party claiming the credits — not necessarily the original purchaser, and it excludes forward/offtake deals and un-named retirements. Volumes are <b>tCO₂e retired</b>. For offtakers, funders, SBTi &amp; risk, switch to <b>Deep research</b>.
+                  <b className="text-foreground">Registered buyers.</b> Organisations that have <b>retired</b> carbon credits issued by these projects, taken from <b>public voluntary carbon registry retirement records</b>.
+                  This is the <b>retirement beneficiary</b> — the party claiming the credits — not necessarily the original purchaser, and it excludes forward/offtake deals and un-named retirements. Volumes are <b>tCO₂e retired</b>; SBTi status is matched to the Science Based Targets initiative database where the company appears. For offtakers, funders &amp; project risk, switch to <b>Deep research</b>.
                 </span>
               ) : (
                 <span>
@@ -285,7 +286,7 @@ export function Dashboard({
           {!registryMode && (
             <ResearchBanner
               r={research}
-              segment={`${segLabel} · ${filters.project_type || "All project types"}`}
+              segment={`${segLabel} · ${typeLabel}`}
               onRetry={rerun}
             />
           )}
@@ -368,7 +369,7 @@ export function Dashboard({
           <footer className="pb-8 pt-4 text-center text-xs text-muted-foreground">
             Project data aggregated from the major voluntary carbon registries (Verra, Gold Standard, CAR, ACR, Isometric, ART).
             Buyer intelligence is AI-researched with source attribution &amp; confidence scoring.
-            <span className="mt-1 block opacity-60">Registry compilation via the Voluntary Registry Offsets Database (CC BY 4.0).</span>
+            <span className="mt-1 block opacity-60">Registry compilation via the Voluntary Registry Offsets Database (CC BY 4.0). Registered-buyer retirement records via CarbonPlan OffsetsDB (CC BY 4.0); SBTi status via the Science Based Targets initiative.</span>
           </footer>
         </>
       )}

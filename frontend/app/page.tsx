@@ -7,6 +7,7 @@ import type { Facets } from "@/lib/types";
 import { Select, Label } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { CountryMultiSelect } from "@/components/CountryMultiSelect";
+import { MultiSelect } from "@/components/MultiSelect";
 import { formatNumber } from "@/lib/format";
 
 const CURRENT_YEAR = 2026;
@@ -23,7 +24,7 @@ export default function Landing() {
   const [facets, setFacets] = React.useState<Facets | null>(null);
   const [stats, setStats] = React.useState<{ total_projects: number; eligible_projects: number } | null>(null);
   const [countries, setCountries] = React.useState<string[]>([]);
-  const [type, setType] = React.useState("");
+  const [types, setTypes] = React.useState<string[]>([]);
   const [registry, setRegistry] = React.useState("");
   const [region, setRegion] = React.useState("");
   const [rr, setRr] = React.useState("");
@@ -44,9 +45,9 @@ export default function Landing() {
   ) {
     const params = new URLSearchParams();
     const cs = over?.countries ?? countries;
-    const t = over?.project_type ?? type;
+    const ts = over?.project_type ? [over.project_type] : types;
     if (cs.length) params.set("countries", cs.join(","));
-    if (t) params.set("project_type", t);
+    if (ts.length) params.set("project_types", ts.join(","));
     if (registry) params.set("registry", registry);
     if (region) params.set("region", region);
     if (rr) params.set("reduction_removal", rr);
@@ -79,11 +80,14 @@ export default function Landing() {
               <CountryMultiSelect options={facets?.countries ?? []} value={countries} onChange={setCountries} />
             </div>
             <div>
-              <Label>Project Type</Label>
-              <Select value={type} onChange={(e) => setType(e.target.value)}>
-                <option value="">All project types</option>
-                {facets?.types.map((t) => <option key={t} value={t}>{t}</option>)}
-              </Select>
+              <Label>Project Type <span className="font-normal opacity-70">(one or more)</span></Label>
+              <MultiSelect
+                options={facets?.types ?? []}
+                value={types}
+                onChange={setTypes}
+                allLabel="All project types"
+                addLabel="Add another type…"
+              />
             </div>
           </div>
 

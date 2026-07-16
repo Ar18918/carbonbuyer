@@ -180,17 +180,41 @@ def _registry_of(pid: str) -> str:
     return "the registry"
 
 
-def _upsert_registry_buyer(db, name: str, cache: dict) -> Buyer:
+def _load_buyer_enrichment() -> dict:
+    """name -> {industry, entity_type, sbti_status, sbti_alignment, sbti_target_year}
+    (SBTi dataset match + curated industry map, precomputed offline)."""
+    path = settings.seed_buyer_enrichment_csv
+    out: dict = {}
+    if not os.path.exists(path):
+        return out
+    with open(path, "r", encoding="utf-8", newline="") as fh:
+        for row in csv.DictReader(fh):
+            out[normalize_name(row.get("buyer_name", ""))] = row
+    return out
+
+
+def _upsert_registry_buyer(db, name: str, cache: dict, enrich: dict) -> Buyer:
     key = normalize_name(name)
     if key in cache:
         return cache[key]
     b = db.query(Buyer).filter(Buyer.normalized_name == key).one_or_none()
-    if not b:
+    if not b:  # only classify NEW buyers — never clobber a researched profile
+        e = enrich.get(key, {})
+        industry = (e.get("industry") or "Unknown").strip() or "Unknown"
+        align = (e.get("sbti_alignment") or "Unknown").strip() or "Unknown"
+        classified = industry not in ("Unknown", "Other")
         b = Buyer(
-            name=name, normalized_name=key, entity_type="unknown", industry="Unknown",
-            industry_confidence="n/a",
-            profile_summary="Identified from public registry retirement records (via CarbonPlan OffsetsDB). "
-                            "Industry & SBTi alignment not yet classified — run Deep research to enrich.",
+            name=name, normalized_name=key,
+            entity_type=(e.get("entity_type") or "unknown").strip() or "unknown",
+            industry=industry,
+            industry_confidence=("Reference" if classified else "n/a"),
+            sbti_status=(e.get("sbti_status") or "Unknown").strip() or "Unknown",
+            sbti_alignment=align,
+            sbti_target_year=((e.get("sbti_target_year") or "").strip() or None),
+            profile_summary=("Identified from public registry retirement records. "
+                             + ("SBTi status matched to the Science Based Targets initiative database. "
+                                if align != "Unknown" else "")
+                             + "Run Deep research for transaction roles (offtake/funding) and a fuller profile."),
             source_urls=["https://carbonplan.org/research/offsets-db"])
         db.add(b)
         db.flush()
@@ -209,6 +233,7 @@ def load_registry_retirements(db) -> int:
     db.commit()
 
     proj_by_pid = {p.project_id: p for p in db.query(Project).all()}
+    enrich = _load_buyer_enrichment()
     cache: dict = {}
 
     def _num(s):
@@ -230,7 +255,7 @@ def load_registry_retirements(db) -> int:
                 vol = float(row.get("retired_tco2e") or 0)
             except ValueError:
                 vol = 0.0
-            buyer = _upsert_registry_buyer(db, name, cache)
+            buyer = _upsert_registry_buyer(db, name, cache, enrich)
             key = (buyer.id, proj.id)
             fv, lv = _num(row.get("first_vintage")), _num(row.get("last_vintage"))
             ry = _num(row.get("last_retirement_year")) or _num(row.get("first_retirement_year"))

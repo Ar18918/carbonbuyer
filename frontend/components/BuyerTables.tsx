@@ -3,13 +3,35 @@ import { Table, TBody, TD, TH, THead, TR } from "@/components/ui/table";
 import type { BuyerOut } from "@/lib/types";
 import { formatNumber, tCO2e } from "@/lib/format";
 
+function roleClass(role: string): string {
+  switch (role) {
+    case "Retired credits": return "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300";
+    case "Offtake":
+    case "Purchase": return "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300";
+    case "Grant / funder": return "bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-300";
+    case "Investor": return "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/50 dark:text-fuchsia-300";
+    default: return "border border-border text-muted-foreground";
+  }
+}
+
+function RoleBadges({ roles }: { roles: string[] }) {
+  if (!roles?.length) return <span className="text-muted-foreground">—</span>;
+  return (
+    <div className="flex flex-wrap gap-1">
+      {roles.map((r) => (
+        <span key={r} className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap ${roleClass(r)}`}>{r}</span>
+      ))}
+    </div>
+  );
+}
+
 export function TopBuyersTable({ buyers }: { buyers: BuyerOut[] }) {
   if (!buyers.length) return <Empty />;
   return (
     <Table>
       <THead>
         <TR>
-          <TH>#</TH><TH>Buyer</TH><TH>Industry</TH><TH className="text-right">Est. Volume</TH>
+          <TH>#</TH><TH>Buyer</TH><TH>Industry</TH><TH>Type</TH><TH className="text-right">Est. Volume</TH>
           <TH className="text-right">Retired</TH><TH className="text-right">Projects</TH><TH>Confidence</TH><TH>SBTi</TH>
         </TR>
       </THead>
@@ -22,6 +44,7 @@ export function TopBuyersTable({ buyers }: { buyers: BuyerOut[] }) {
               {b.hq_country && <div className="text-xs text-muted-foreground">{b.hq_country}</div>}
             </TD>
             <TD><Badge variant="outline">{b.industry}</Badge></TD>
+            <TD><RoleBadges roles={b.roles} /></TD>
             <TD className="text-right tabular-nums">{tCO2e(b.total_estimated_volume)}</TD>
             <TD className="text-right tabular-nums">{tCO2e(b.total_retired_volume)}</TD>
             <TD className="text-right tabular-nums">{b.num_projects}</TD>

@@ -15,10 +15,13 @@ function num(v: string | string[] | undefined): number | null {
 export default function DashboardPage({ searchParams }: { searchParams: SP }) {
   const countriesRaw = str(searchParams.countries);
   const countries = countriesRaw ? countriesRaw.split(",").map((s) => s.trim()).filter(Boolean) : null;
+  const typesRaw = str(searchParams.project_types);
+  const project_types = typesRaw ? typesRaw.split(",").map((s) => s.trim()).filter(Boolean) : null;
   const initialFilters: ProjectFilters = {
     country: str(searchParams.country),
     countries,
     project_type: str(searchParams.project_type),
+    project_types,
     registry: str(searchParams.registry),
     region: str(searchParams.region),
     reduction_removal: str(searchParams.reduction_removal),

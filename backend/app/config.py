@@ -59,6 +59,8 @@ class Settings(BaseSettings):
     # Pre-matched registry retirements (OffsetsDB harmonized beneficiaries, joined to our project_ids)
     # that power the deterministic "Registered buyers" path — no AI, no tokens.
     seed_registry_csv: str = "/data/seed/offsetsdb_retirements.csv"
+    # Deterministic industry + SBTi enrichment for registered buyers (SBTi dataset + curated map).
+    seed_buyer_enrichment_csv: str = "/data/seed/buyer_enrichment.csv"
 
     # --- CORS ---
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]

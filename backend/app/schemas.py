@@ -9,6 +9,7 @@ class ProjectFilters(BaseModel):
     country: str | None = None
     countries: list[str] | None = None   # multi-select; takes precedence over `country`
     project_type: str | None = None
+    project_types: list[str] | None = None   # multi-select; takes precedence over `project_type`
     registry: str | None = None
     region: str | None = None
     reduction_removal: str | None = None
@@ -94,6 +95,7 @@ class BuyerOut(BaseModel):
     is_repeat_buyer: bool
     confidence_tier: str = "Low"       # best evidence tier across this buyer's links in the segment
     confidence_score: float = 0.0
+    roles: list[str] = []              # how this entity participated: Retired credits / Offtake / Grant-funder / Investor / Purchase
 
 
 class RiskFlagOut(BaseModel):

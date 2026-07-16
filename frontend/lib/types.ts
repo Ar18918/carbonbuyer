@@ -4,6 +4,7 @@ export interface ProjectFilters {
   country?: string | null;
   countries?: string[] | null;
   project_type?: string | null;
+  project_types?: string[] | null;
   registry?: string | null;
   region?: string | null;
   reduction_removal?: string | null;
@@ -69,6 +70,7 @@ export interface BuyerOut {
   is_repeat_buyer: boolean;
   confidence_tier: string;
   confidence_score: number;
+  roles: string[];
 }
 
 export interface RiskFlagOut {
