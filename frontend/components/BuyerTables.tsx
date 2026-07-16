@@ -10,6 +10,9 @@ function roleClass(role: string): string {
     case "Purchase": return "bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300";
     case "Grant / funder": return "bg-violet-100 text-violet-800 dark:bg-violet-900/50 dark:text-violet-300";
     case "Investor": return "bg-fuchsia-100 text-fuchsia-800 dark:bg-fuchsia-900/50 dark:text-fuchsia-300";
+    case "Partner": return "bg-teal-100 text-teal-800 dark:bg-teal-900/50 dark:text-teal-300";
+    case "Distributor": return "bg-cyan-100 text-cyan-800 dark:bg-cyan-900/50 dark:text-cyan-300";
+    case "Interest": return "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300";
     default: return "border border-border text-muted-foreground";
   }
 }

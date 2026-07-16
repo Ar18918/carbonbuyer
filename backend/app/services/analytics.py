@@ -19,6 +19,10 @@ from app.schemas import (
 from app.services import filters as filter_svc
 
 
+_ROLE_ORDER = ["Retired credits", "Offtake", "Purchase", "Grant / funder", "Investor",
+               "Distributor", "Partner", "Interest", "Other"]
+
+
 def _role_label(transaction_type: str | None, buyer_role: str | None) -> str:
     """Humanize how an entity participated — distinguishes actual credit users from
     offtakers, grant-funders and investors."""
@@ -31,6 +35,12 @@ def _role_label(transaction_type: str | None, buyer_role: str | None) -> str:
         return "Grant / funder"
     if "equity" in t or "invest" in t or "investor" in r:
         return "Investor"
+    if "distributor" in r or "reseller" in r or "reseller" in t:
+        return "Distributor"
+    if "partner" in t or "partner" in r:
+        return "Partner"
+    if "interest" in t or "announced" in t or "mou" in t:
+        return "Interest"
     if "purchase" in t or "spot" in t or "buyer" in r:
         return "Purchase"
     return "Other"
@@ -100,10 +110,7 @@ def build_dashboard(db: Session, f: ProjectFilters, source: str = "all") -> Dash
             total_repeat_volume=round(agg["vol"], 2) if is_repeat else 0.0,
             repeat_buyer_score=b.repeat_buyer_score, is_repeat_buyer=is_repeat,
             confidence_score=round(agg["conf"], 1), confidence_tier=tier_from_score(agg["conf"]),
-            roles=sorted(agg["roles"], key=lambda x: ["Retired credits", "Offtake", "Purchase",
-                                                      "Grant / funder", "Investor", "Other"].index(x)
-                         if x in ["Retired credits", "Offtake", "Purchase", "Grant / funder", "Investor", "Other"]
-                         else 9),
+            roles=sorted(agg["roles"], key=lambda x: (_ROLE_ORDER.index(x) if x in _ROLE_ORDER else 99)),
         ))
 
     buyer_rows.sort(key=lambda x: x.total_estimated_volume, reverse=True)

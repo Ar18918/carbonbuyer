@@ -190,20 +190,21 @@ def export_exec_summary(f: ProjectFilters, db: Session = Depends(get_db)):
             ("Projects", f"{k.total_projects}"), ("Repeat %", f"{k.repeat_buyer_pct:.0f}%"),
             ("SBTi-aligned %", f"{k.sbti_aligned_pct:.0f}%")]
     w = 182 / len(kpis)
-    x0 = 14
+    x0, y0 = 14, pdf.get_y()   # fix the row's top once — multi_cell below advances get_y()
     for label, val in kpis:
         pdf.set_fill_color(240, 244, 250)
-        pdf.rect(x0, pdf.get_y(), w - 3, 20, "F")
-        pdf.set_xy(x0, pdf.get_y() + 3)
+        pdf.rect(x0, y0, w - 3, 20, "F")
+        pdf.set_xy(x0, y0 + 4)
         pdf.set_text_color(*blue)
-        pdf.set_font("Helvetica", "B", 14)
+        pdf.set_font("Helvetica", "B", 13)
         pdf.cell(w - 3, 7, _ascii(val), align="C")
-        pdf.set_xy(x0, pdf.get_y() + 8)
+        pdf.set_xy(x0, y0 + 11)
         pdf.set_text_color(90, 90, 90)
-        pdf.set_font("Helvetica", "", 7.5)
-        pdf.multi_cell(w - 3, 3.4, _ascii(label), align="C")
+        pdf.set_font("Helvetica", "", 7)
+        pdf.multi_cell(w - 3, 3.2, _ascii(label), align="C")
         x0 += w
-    pdf.ln(26)
+    pdf.set_y(y0 + 20)
+    pdf.ln(8)
 
     def heading(t):
         pdf.set_text_color(*navy)
@@ -227,7 +228,7 @@ def export_exec_summary(f: ProjectFilters, db: Session = Depends(get_db)):
 
     # Top buyers table
     heading("Top Buyers")
-    cols = [(10, "#"), (66, "Buyer"), (40, "Industry"), (34, "Est. tCO2e"), (16, "Conf."), (16, "SBTi")]
+    cols = [(8, "#"), (58, "Buyer"), (40, "Industry"), (34, "Est. tCO2e"), (16, "Conf."), (26, "SBTi")]
     pdf.set_font("Helvetica", "B", 8.5)
     pdf.set_fill_color(*blue)
     pdf.set_text_color(255, 255, 255)
@@ -236,15 +237,18 @@ def export_exec_summary(f: ProjectFilters, db: Session = Depends(get_db)):
     pdf.ln(7)
     pdf.set_text_color(*ink)
     pdf.set_font("Helvetica", "", 8.5)
+    sbti_short = {"SBTi Aligned": "Aligned", "Not SBTi Aligned": "Not aligned", "Committed": "Committed"}
     top = dash.top_buyers[:12]
     if not top:
         pdf.cell(0, 6, "No buyers identified for this segment yet.", new_x="LMARGIN", new_y="NEXT")
     for i, b in enumerate(top, 1):
         fill = i % 2 == 0
         pdf.set_fill_color(244, 247, 251)
-        vals = [str(i), b.name[:40], (b.industry or "")[:22],
+        nm = b.name if len(b.name) <= 34 else b.name[:33] + "..."
+        ind = (b.industry or "") if len(b.industry or "") <= 24 else (b.industry or "")[:23] + "."
+        vals = [str(i), nm, ind,
                 f"{b.total_estimated_volume:,.0f}" if b.total_estimated_volume else "-",
-                b.confidence_tier, b.sbti_alignment.replace("SBTi ", "").replace("Not ", "No")[:6]]
+                b.confidence_tier, sbti_short.get(b.sbti_alignment, "Unknown")]
         for (wdt, _), v in zip(cols, vals):
             pdf.cell(wdt, 6, _ascii(v), border=0, fill=fill)
         pdf.ln(6)
@@ -258,14 +262,17 @@ def export_exec_summary(f: ProjectFilters, db: Session = Depends(get_db)):
         pdf.cell(0, 6, "No material red flags surfaced.", new_x="LMARGIN", new_y="NEXT")
     for r in risks:
         sev = int(r.severity_score)
+        pdf.set_x(14)
         pdf.set_text_color(*(magenta if sev >= 70 else (200, 120, 0) if sev >= 50 else (110, 110, 110)))
         pdf.set_font("Helvetica", "B", 9)
         cat = r.risk_category.replace("_", " ").title()
-        pdf.multi_cell(182, 4.6, _ascii(f"[{sev}] {cat}"))
+        pdf.multi_cell(182, 4.8, _ascii(f"[{sev}] {cat}"), new_x="LMARGIN", new_y="NEXT")
+        pdf.set_x(14)
         pdf.set_text_color(*ink)
         pdf.set_font("Helvetica", "", 9)
-        pdf.multi_cell(182, 4.6, _ascii(r.ai_summary))
-        pdf.ln(1.5)
+        summ = r.ai_summary if len(r.ai_summary) <= 300 else r.ai_summary[:297] + "..."
+        pdf.multi_cell(182, 4.4, _ascii(summ), new_x="LMARGIN", new_y="NEXT")
+        pdf.ln(2)
 
     pdf.set_y(-14)
     pdf.set_text_color(140, 140, 140)
