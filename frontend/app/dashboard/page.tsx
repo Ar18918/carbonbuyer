@@ -31,5 +31,7 @@ export default function DashboardPage({ searchParams }: { searchParams: SP }) {
   };
   const model = str(searchParams.model) || "opus";
   const intensity = str(searchParams.intensity) || "standard";
-  return <Dashboard initialFilters={initialFilters} initialModel={model} initialIntensity={intensity} />;
+  const source = str(searchParams.source) === "registry" ? "registry" : "all";
+  return <Dashboard initialFilters={initialFilters} initialModel={model}
+                    initialIntensity={intensity} initialSource={source} />;
 }

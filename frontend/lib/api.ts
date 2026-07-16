@@ -23,7 +23,8 @@ async function get<T>(path: string): Promise<T> {
 export const api = {
   facets: () => get<Facets>("/projects/facets"),
   stats: () => get<{ total_projects: number; eligible_projects: number }>("/projects/stats"),
-  dashboard: (filters: ProjectFilters) => post<DashboardResponse>("/analytics/dashboard", filters),
+  dashboard: (filters: ProjectFilters, source: "all" | "registry" = "all") =>
+    post<DashboardResponse>(`/analytics/dashboard?source=${source}`, filters),
   researchStatus: () => get<{ engine_enabled: boolean; model: string; note: string | null }>("/research/status"),
   analyze: (filters: ProjectFilters, opts: { force?: boolean; model?: string; intensity?: string } = {}) => {
     const qs = new URLSearchParams();

@@ -91,8 +91,9 @@ type ResearchUI = {
 };
 
 export function Dashboard({
-  initialFilters, initialModel = "opus", initialIntensity = "standard",
-}: { initialFilters: ProjectFilters; initialModel?: string; initialIntensity?: string }) {
+  initialFilters, initialModel = "opus", initialIntensity = "standard", initialSource = "all",
+}: { initialFilters: ProjectFilters; initialModel?: string; initialIntensity?: string;
+     initialSource?: "registry" | "all" }) {
   const [facets, setFacets] = React.useState<Facets | null>(null);
   const [filters, setFilters] = React.useState<ProjectFilters>(initialFilters);
   const [data, setData] = React.useState<DashboardResponse | null>(null);
@@ -100,6 +101,9 @@ export function Dashboard({
   const [err, setErr] = React.useState<string | null>(null);
   const [engine, setEngine] = React.useState<{ engine_enabled: boolean; model: string } | null>(null);
   const [research, setResearch] = React.useState<ResearchUI>({ state: "idle", runId: null });
+  // "registry" = deterministic registered-buyer (OffsetsDB retirement) view, no AI.
+  // "all" = registered buyers + AI deep-research findings.
+  const [source, setSource] = React.useState<"registry" | "all">(initialSource);
   // Research always uses Opus deep research at standard intensity — no user-facing selectors.
   const model = initialModel;
   const intensity = initialIntensity;
@@ -114,11 +118,11 @@ export function Dashboard({
   }, []);
 
   // Re-fetch the dashboard payload only (does not re-trigger research).
-  const refetch = React.useCallback(async (f: ProjectFilters) => {
-    try { setData(await api.dashboard(f)); } catch { /* keep prior data */ }
+  const refetch = React.useCallback(async (f: ProjectFilters, src: "registry" | "all") => {
+    try { setData(await api.dashboard(f, src)); } catch { /* keep prior data */ }
   }, []);
 
-  const startPoll = React.useCallback((id: number, f: ProjectFilters) => {
+  const startPoll = React.useCallback((id: number, f: ProjectFilters, src: "registry" | "all") => {
     stopPoll();
     let attempts = 0;
     pollRef.current = setInterval(async () => {
@@ -129,7 +133,7 @@ export function Dashboard({
         if (r.status === "completed") {
           stopPoll();
           setResearch({ state: "done", runId: id, run: r });
-          refetch(f);
+          refetch(f, src);
         } else if (r.status === "failed") {
           stopPoll();
           setResearch({ state: "error", runId: id, run: r, note: r.error });
@@ -139,19 +143,21 @@ export function Dashboard({
     }, 4000);
   }, [refetch, stopPoll]);
 
-  // Decide whether to kick off AI research for the current segment.
+  // Decide whether to kick off AI research for the current segment (deep-research view only).
+  // Note: we do NOT short-circuit on dash.buyer_count — the registry base already makes it > 0.
+  // The backend /analyze only reports "ready" when *research-origin* findings exist, so it
+  // correctly augments the registry base with AI research exactly once per segment.
   const ensureResearch = React.useCallback(async (f: ProjectFilters, dash: DashboardResponse) => {
-    if (dash.buyer_count > 0) { setResearch({ state: "idle", runId: null }); return; }
     const hasCountry = !!(f.countries?.length || f.country);
     if (!hasCountry || !f.project_type) { setResearch({ state: "needs_segment", runId: null }); return; }
     if (dash.projects.length === 0) { setResearch({ state: "no_projects", runId: null }); return; }
     setResearch({ state: "checking", runId: null });
     try {
       const res: AnalyzeResponse = await api.analyze(f, settingsRef.current);
-      if (res.status === "ready") { setResearch({ state: "idle", runId: null }); refetch(f); return; }
+      if (res.status === "ready") { setResearch({ state: "idle", runId: null }); refetch(f, "all"); return; }
       if (res.status === "started" || res.status === "running") {
         setResearch({ state: "running", runId: res.run_id });
-        if (res.run_id) startPoll(res.run_id, f);
+        if (res.run_id) startPoll(res.run_id, f, "all");
         return;
       }
       setResearch({ state: res.status as ResearchUI["state"], runId: null, note: res.note });
@@ -160,41 +166,52 @@ export function Dashboard({
     }
   }, [refetch, startPoll]);
 
-  const run = React.useCallback(async (f: ProjectFilters) => {
+  const run = React.useCallback(async (f: ProjectFilters, src: "registry" | "all") => {
     setLoading(true); setErr(null);
     try {
-      const d = await api.dashboard(f);
+      const d = await api.dashboard(f, src);
       setData(d);
-      ensureResearch(f, d);
+      // Registry view is deterministic — never auto-triggers AI research.
+      if (src === "registry") { stopPoll(); setResearch({ state: "idle", runId: null }); }
+      else ensureResearch(f, d);
     } catch (e) {
       setErr((e as Error).message);
     } finally {
       setLoading(false);
     }
-  }, [ensureResearch]);
+  }, [ensureResearch, stopPoll]);
 
-  // Manual re-run (force a fresh research pass even if buyers already exist).
+  // Manual re-run (force a fresh research pass even if research findings already exist).
   const rerun = React.useCallback(async () => {
     if (!filters.country || !filters.project_type) return;
     setResearch({ state: "checking", runId: null });
     try {
       const res = await api.analyze(filters, { force: true, ...settingsRef.current });
-      if (res.run_id) { setResearch({ state: "running", runId: res.run_id }); startPoll(res.run_id, filters); }
+      if (res.run_id) { setResearch({ state: "running", runId: res.run_id }); startPoll(res.run_id, filters, "all"); }
       else setResearch({ state: res.status as ResearchUI["state"], runId: null, note: res.note });
     } catch {
       setResearch({ state: "error", runId: null, note: "Could not reach the research engine." });
     }
   }, [filters, startPoll]);
 
+  // Switch between the registered-buyer view and the deep-research view.
+  const switchSource = React.useCallback((src: "registry" | "all") => {
+    setSource((cur) => {
+      if (cur !== src) run(filters, src);
+      return src;
+    });
+  }, [filters, run]);
+
   React.useEffect(() => {
     api.facets().then(setFacets).catch(() => {});
     api.researchStatus().then(setEngine).catch(() => {});
-    run(initialFilters);
+    run(initialFilters, initialSource);
     return () => stopPoll();
-  }, [run, initialFilters, stopPoll]);
+  }, [run, initialFilters, initialSource, stopPoll]);
 
   const segLabel = (filters.countries?.length ? filters.countries.join(", ") : filters.country) || "All countries";
   const hasSegment = !!(filters.countries?.length || filters.country) && !!filters.project_type;
+  const registryMode = source === "registry";
 
   return (
     <div className="mx-auto max-w-[1400px] space-y-4 p-4 md:p-6">
@@ -206,7 +223,22 @@ export function Dashboard({
           <p className="text-xs text-muted-foreground">Buyer intelligence, SBTi alignment &amp; project risk for this market</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          {engine && (
+          {/* Data-source toggle: registered buyers (deterministic) vs deep research (AI) */}
+          <div className="inline-flex rounded-md border p-0.5 text-xs">
+            <button
+              onClick={() => switchSource("registry")}
+              className={`rounded px-2.5 py-1 font-medium ${registryMode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              Registered buyers
+            </button>
+            <button
+              onClick={() => switchSource("all")}
+              className={`rounded px-2.5 py-1 font-medium ${!registryMode ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"}`}
+            >
+              Deep research
+            </button>
+          </div>
+          {!registryMode && engine && (
             <div className="flex items-center gap-1.5 rounded-full border bg-card px-3 py-1 text-xs text-muted-foreground">
               <span className={`h-2 w-2 rounded-full ${engine.engine_enabled ? "bg-emerald-500" : "bg-amber-500"}`} />
               {engine.engine_enabled ? `Live research engine: ${engine.model}` : "Research engine idle — showing seeded snapshot"}
@@ -216,7 +248,7 @@ export function Dashboard({
         </div>
       </header>
 
-      <Filters facets={facets} filters={filters} onChange={setFilters} onRun={() => run(filters)} loading={loading} />
+      <Filters facets={facets} filters={filters} onChange={setFilters} onRun={() => run(filters, source)} loading={loading} />
 
       {err && <div className="rounded-lg border border-rose-300 bg-rose-50 p-3 text-sm text-rose-700 dark:bg-rose-950/40">{err}. Is the backend running at /api?</div>}
 
@@ -225,12 +257,20 @@ export function Dashboard({
           <div className="flex items-start justify-between gap-3 rounded-lg border border-primary/20 bg-primary/5 p-3 text-xs text-muted-foreground">
             <div className="flex items-start gap-2">
               <Info size={14} className="mt-0.5 shrink-0 text-primary" />
-              <span>
-                Buyer intelligence is compiled from public retirement disclosures, registry records, corporate/ESG reports, press releases and market databases — every buyer and risk carries a source link and confidence score.
-                Pre-issuance projects surface buyers as forward purchasers / offtakers / funders rather than retirements.
-              </span>
+              {registryMode ? (
+                <span>
+                  <b className="text-foreground">Registered buyers.</b> Organisations that have <b>retired</b> carbon credits issued by these projects, taken from public registry retirement records (harmonized by{" "}
+                  <a className="underline" href="https://carbonplan.org/research/offsets-db" target="_blank" rel="noreferrer">CarbonPlan OffsetsDB</a>, CC BY 4.0).
+                  This is the <b>retirement beneficiary</b> — the party claiming the credits — not necessarily the original purchaser, and it excludes forward/offtake deals and un-named retirements. Volumes are <b>tCO₂e retired</b>. For offtakers, funders, SBTi &amp; risk, switch to <b>Deep research</b>.
+                </span>
+              ) : (
+                <span>
+                  <b className="text-foreground">Deep research.</b> Builds on the registered retirement buyers and uses Claude to add likely offtakers, funders and forward purchasers, plus SBTi alignment and project risk — every added buyer carries a source link and confidence score.
+                  Pre-issuance projects surface buyers as forward purchasers / offtakers / funders rather than retirements.
+                </span>
+              )}
             </div>
-            {hasSegment && (
+            {!registryMode && hasSegment && (
               <button
                 onClick={rerun}
                 disabled={research.state === "running" || research.state === "checking"}
@@ -242,13 +282,19 @@ export function Dashboard({
             )}
           </div>
 
-          <ResearchBanner
-            r={research}
-            segment={`${segLabel} · ${filters.project_type || "All project types"}`}
-            onRetry={rerun}
-          />
+          {!registryMode && (
+            <ResearchBanner
+              r={research}
+              segment={`${segLabel} · ${filters.project_type || "All project types"}`}
+              onRetry={rerun}
+            />
+          )}
 
-          <KpiCards kpis={data.kpis} />
+          <KpiCards
+            kpis={data.kpis}
+            volumeLabel={registryMode ? "Retired · Identified Buyers" : "Est. Volume · Identified Buyers"}
+            volumeSub={registryMode ? "tCO₂e retired from these projects" : "tCO₂e · summed across buyers found"}
+          />
 
           {/* Row: distribution donuts + buyer count */}
           <div className="grid gap-3 lg:grid-cols-4">

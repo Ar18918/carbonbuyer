@@ -26,18 +26,21 @@ def _nv(d: dict, top: int | None = None, reverse: bool = True) -> list[NameValue
     return [NameValue(name=str(k), value=round(float(v), 2)) for k, v in items]
 
 
-def build_dashboard(db: Session, f: ProjectFilters) -> DashboardResponse:
+def build_dashboard(db: Session, f: ProjectFilters, source: str = "all") -> DashboardResponse:
+    # source: "all" = registry retirements + AI research; "registry" = deterministic OffsetsDB
+    # retirement records only (the fast, token-free "Registered buyers" path).
+    registry_only = source == "registry"
     projects: list[Project] = filter_svc.query_projects(db, f).all()
     pid_set = {p.id for p in projects}
 
     links: list[BuyerProjectLink] = []
     if pid_set:
-        links = (
-            db.query(BuyerProjectLink)
-            .options(joinedload(BuyerProjectLink.buyer), joinedload(BuyerProjectLink.project))
-            .filter(BuyerProjectLink.project_id.in_(pid_set))
-            .all()
-        )
+        q = (db.query(BuyerProjectLink)
+             .options(joinedload(BuyerProjectLink.buyer), joinedload(BuyerProjectLink.project))
+             .filter(BuyerProjectLink.project_id.in_(pid_set)))
+        if registry_only:
+            q = q.filter(BuyerProjectLink.origin == "registry")
+        links = q.all()
 
     # --- per-buyer segment aggregation ---
     by_buyer: dict[int, dict] = {}
@@ -134,7 +137,9 @@ def build_dashboard(db: Session, f: ProjectFilters) -> DashboardResponse:
     buyercount_by_proj: dict[int, int] = defaultdict(int)
     for l in links:
         buyercount_by_proj[l.project_id] += 1
-    risks = db.query(RiskFlag).filter(RiskFlag.project_id.in_(pid_set)).all() if pid_set else []
+    # Risk flags are an AI-research product; the registry-only path shows none.
+    risks = ([] if registry_only else
+             db.query(RiskFlag).filter(RiskFlag.project_id.in_(pid_set)).all() if pid_set else [])
     top_risk_by_proj: dict[int, RiskFlag] = {}   # highest-severity researched risk per project
     for rk in risks:
         risk_by_proj[rk.project_id] += 1

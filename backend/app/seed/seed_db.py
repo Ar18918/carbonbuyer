@@ -11,6 +11,7 @@ Steps:
 """
 from __future__ import annotations
 
+import csv
 import json
 import logging
 import os
@@ -164,6 +165,108 @@ def _load_one_snapshot(db, data: dict, proj_by_pid: dict) -> int:
     return n_links
 
 
+REGISTRY_BY_PREFIX = {
+    "VCS": "Verra", "GS": "Gold Standard", "GLD": "Gold Standard",
+    "CAR": "Climate Action Reserve", "ACR": "American Carbon Registry",
+    "ART": "ART TREES", "ISO": "Isometric", "CCB": "Cercarbono",
+}
+
+
+def _registry_of(pid: str) -> str:
+    up = pid.upper()
+    for pre, name in REGISTRY_BY_PREFIX.items():
+        if up.startswith(pre):
+            return name
+    return "the registry"
+
+
+def _upsert_registry_buyer(db, name: str, cache: dict) -> Buyer:
+    key = normalize_name(name)
+    if key in cache:
+        return cache[key]
+    b = db.query(Buyer).filter(Buyer.normalized_name == key).one_or_none()
+    if not b:
+        b = Buyer(
+            name=name, normalized_name=key, entity_type="unknown", industry="Unknown",
+            industry_confidence="n/a",
+            profile_summary="Identified from public registry retirement records (via CarbonPlan OffsetsDB). "
+                            "Industry & SBTi alignment not yet classified — run Deep research to enrich.",
+            source_urls=["https://carbonplan.org/research/offsets-db"])
+        db.add(b)
+        db.flush()
+    cache[key] = b
+    return b
+
+
+def load_registry_retirements(db) -> int:
+    """Load the deterministic 'Registered buyers' layer: harmonized retirement beneficiaries
+    (OffsetsDB) pre-matched to our project_ids. origin='registry', no AI involved."""
+    path = settings.seed_registry_csv
+    if not os.path.exists(path):
+        log.info("No registry retirements seed at %s — registry buyer layer empty.", path)
+        return 0
+    db.execute(delete(BuyerProjectLink).where(BuyerProjectLink.origin == "registry"))  # idempotent
+    db.commit()
+
+    proj_by_pid = {p.project_id: p for p in db.query(Project).all()}
+    cache: dict = {}
+
+    def _num(s):
+        try:
+            return int(float(s)) if str(s).strip() else None
+        except (TypeError, ValueError):
+            return None
+
+    # Accumulate per (buyer_id, project_id) so name-normalization collisions (e.g. "Shell"/"SHELL")
+    # merge instead of violating the (buyer_id, project_id, source_url) unique constraint.
+    acc: dict = {}
+    with open(path, "r", encoding="utf-8", newline="") as fh:
+        for row in csv.DictReader(fh):
+            proj = proj_by_pid.get((row.get("project_id") or "").strip())
+            name = (row.get("buyer_name") or "").strip()
+            if not proj or not name:
+                continue
+            try:
+                vol = float(row.get("retired_tco2e") or 0)
+            except ValueError:
+                vol = 0.0
+            buyer = _upsert_registry_buyer(db, name, cache)
+            key = (buyer.id, proj.id)
+            fv, lv = _num(row.get("first_vintage")), _num(row.get("last_vintage"))
+            ry = _num(row.get("last_retirement_year")) or _num(row.get("first_retirement_year"))
+            a = acc.get(key)
+            if a is None:
+                acc[key] = {"vol": vol, "n": _num(row.get("txn_count")) or 1, "vmin": fv, "vmax": lv,
+                            "ry": ry, "reg": _registry_of(proj.project_id),
+                            "url": (row.get("source_url") or "").strip()}
+            else:
+                a["vol"] += vol
+                a["n"] += _num(row.get("txn_count")) or 1
+                a["vmin"] = fv if a["vmin"] is None else (min(a["vmin"], fv) if fv else a["vmin"])
+                a["vmax"] = lv if a["vmax"] is None else (max(a["vmax"], lv) if lv else a["vmax"])
+                if ry and (a["ry"] is None or ry > a["ry"]):
+                    a["ry"] = ry
+
+    for (bid, pid), a in acc.items():
+        vintages = (f"{a['vmin']}–{a['vmax']}" if a["vmin"] and a["vmax"] and a["vmin"] != a["vmax"]
+                    else str(a["vmin"] or a["vmax"] or ""))
+        db.add(BuyerProjectLink(
+            buyer_id=bid, project_id=pid,
+            buyer_role="retirement_beneficiary", transaction_type="retirement",
+            estimated_volume_tco2e=a["vol"], retirement_volume_tco2e=a["vol"],
+            volume_basis="Registry retirement records (OffsetsDB harmonized beneficiary)",
+            purchase_year=(str(a["ry"]) if a["ry"] else None),
+            source_url=(a["url"] or "https://carbonplan.org/research/offsets-db"),
+            source_type="registry-retirement",
+            evidence_summary=(f"Retired {round(a['vol']):,} tCO2e across {a['n']} retirement(s)"
+                              + (f" (vintages {vintages})" if vintages else "")
+                              + f", per {a['reg']} registry records compiled by CarbonPlan OffsetsDB."),
+            confidence_tier="High", confidence_score=95.0, verdict="CONFIRMED", origin="registry"))
+    db.commit()
+    log.info("Loaded %d registry retirement links across %d buyers.", len(acc), len(cache))
+    return len(acc)
+
+
 def main() -> None:
     create_tables()
     db = SessionLocal()
@@ -176,6 +279,7 @@ def main() -> None:
         n = ingest_projects(db)
         log.info("Projects in DB: %d", n)
         load_research_snapshot(db)
+        load_registry_retirements(db)
         aggregation.recompute_all(db)
         log.info("Seeding complete.")
     finally:

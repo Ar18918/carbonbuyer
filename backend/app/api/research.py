@@ -81,8 +81,12 @@ def analyze(f: ProjectFilters, background: BackgroundTasks, force: bool = Query(
     pid_set = {p.id for p in projects}
 
     if not force:
-        has_buyers = db.query(BuyerProjectLink.id).filter(BuyerProjectLink.project_id.in_(pid_set)).first()
-        if has_buyers is not None:
+        # Only *research* findings count as "already researched" — the registry base is always
+        # present, so it must not short-circuit a deep-research run.
+        has_research = (db.query(BuyerProjectLink.id)
+                        .filter(BuyerProjectLink.project_id.in_(pid_set),
+                                BuyerProjectLink.origin == "research").first())
+        if has_research is not None:
             return {"status": "ready", "run_id": None, "note": None}
 
     in_flight = (db.query(ResearchRun)

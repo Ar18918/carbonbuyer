@@ -129,6 +129,8 @@ class BuyerProjectLink(Base):
     confidence_tier: Mapped[str] = mapped_column(String(16), default="Low", index=True)
     confidence_score: Mapped[float] = mapped_column(Float, default=0.0)
     verdict: Mapped[str | None] = mapped_column(String(16), nullable=True)  # CONFIRMED / PLAUSIBLE
+    # "registry" = deterministic OffsetsDB retirement record; "research" = AI deep-search finding.
+    origin: Mapped[str] = mapped_column(String(16), default="research", index=True)
 
     research_run_id: Mapped[int | None] = mapped_column(ForeignKey("research_runs.id"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=_utcnow)

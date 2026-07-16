@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import { Leaf, ArrowRight, Database, Sparkles, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import type { Facets } from "@/lib/types";
-import { Button } from "@/components/ui/button";
 import { Select, Label } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { CountryMultiSelect } from "@/components/CountryMultiSelect";
@@ -39,7 +38,10 @@ export default function Landing() {
     api.stats().then(setStats).catch(() => {});
   }, []);
 
-  function analyze(over?: { countries?: string[]; project_type?: string; include_ineligible?: boolean }) {
+  function analyze(
+    over?: { countries?: string[]; project_type?: string; include_ineligible?: boolean },
+    source: "registry" | "all" = "all",
+  ) {
     const params = new URLSearchParams();
     const cs = over?.countries ?? countries;
     const t = over?.project_type ?? type;
@@ -52,6 +54,7 @@ export default function Landing() {
     if (over?.include_ineligible ?? includeIneligible) params.set("include_ineligible", "1");
     params.set("model", model);
     params.set("intensity", intensity);
+    params.set("source", source);
     router.push(`/dashboard?${params.toString()}`);
   }
 
@@ -122,13 +125,36 @@ export default function Landing() {
             </label>
           </details>
 
-          <div className="mt-5 flex items-center justify-between gap-3">
+          <div className="mt-5 space-y-3">
             <p className="text-xs text-muted-foreground">
               {stats ? <>{formatNumber(stats.total_projects)} projects · {formatNumber(stats.eligible_projects)} eligible</> : "Loading dataset…"}
             </p>
-            <Button size="lg" onClick={() => analyze()}>
-              Analyze market <ArrowRight size={16} />
-            </Button>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <button
+                onClick={() => analyze(undefined, "registry")}
+                className="group flex flex-col items-start gap-1 rounded-lg bg-primary p-4 text-left text-primary-foreground shadow-sm transition hover:opacity-90"
+              >
+                <span className="flex items-center gap-2 font-semibold">
+                  <Database size={17} /> Registered buyers
+                  <ArrowRight size={15} className="transition group-hover:translate-x-0.5" />
+                </span>
+                <span className="text-xs opacity-90">
+                  Instant, no AI. Entities that have <b>retired</b> credits from these projects, from public registry records (OffsetsDB).
+                </span>
+              </button>
+              <button
+                onClick={() => analyze(undefined, "all")}
+                className="group flex flex-col items-start gap-1 rounded-lg border border-primary/40 p-4 text-left transition hover:bg-primary/5"
+              >
+                <span className="flex items-center gap-2 font-semibold text-primary">
+                  <Sparkles size={17} /> Deep research (Opus)
+                  <ArrowRight size={15} className="transition group-hover:translate-x-0.5" />
+                </span>
+                <span className="text-xs text-muted-foreground">
+                  Builds on the registered buyers, then uses Claude to add offtakers/funders plus SBTi &amp; risk intelligence.
+                </span>
+              </button>
+            </div>
           </div>
         </CardContent>
       </Card>

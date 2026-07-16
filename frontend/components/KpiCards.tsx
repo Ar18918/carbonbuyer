@@ -18,11 +18,11 @@ function Kpi({ icon, label, value, sub }: { icon: React.ReactNode; label: string
   );
 }
 
-export function KpiCards({ kpis }: { kpis: KPIs }) {
+export function KpiCards({ kpis, volumeLabel = "Est. Volume · Identified Buyers", volumeSub = "tCO₂e · summed across buyers found" }: { kpis: KPIs; volumeLabel?: string; volumeSub?: string }) {
   return (
     <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-5">
       <Kpi icon={<Users size={18} />} label="Total Buyers Identified" value={formatNumber(kpis.total_buyers)} />
-      <Kpi icon={<TrendingUp size={18} />} label="Est. Volume · Identified Buyers" value={`${formatVolume(kpis.total_estimated_volume)}`} sub="tCO₂e · summed across buyers found" />
+      <Kpi icon={<TrendingUp size={18} />} label={volumeLabel} value={`${formatVolume(kpis.total_estimated_volume)}`} sub={volumeSub} />
       <Kpi icon={<Layers size={18} />} label="Projects Included" value={formatNumber(kpis.total_projects)} />
       <Kpi icon={<Repeat size={18} />} label="Repeat Buyers" value={formatPct(kpis.repeat_buyer_pct)} />
       <Kpi icon={<BadgeCheck size={18} />} label="SBTi-Aligned Buyers" value={formatPct(kpis.sbti_aligned_pct)} />
