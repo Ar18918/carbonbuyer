@@ -11,7 +11,7 @@ from sqlalchemy.orm import Session
 
 from app.api.deps import require_role
 from app.config import settings
-from app.db.models import BuyerProjectLink, ResearchRun
+from app.db.models import BuyerProjectLink, Project, ResearchRun
 from app.db.session import SessionLocal, get_db
 from app.research.engine import engine
 from app.schemas import ProjectFilters, ResearchRequest, ResearchRunOut
@@ -80,14 +80,15 @@ def analyze(f: ProjectFilters, background: BackgroundTasks, force: bool = Query(
     projects = filter_svc.query_projects(db, f).limit(preset["max_projects"]).all()
     if not projects:
         return {"status": "no_projects", "run_id": None, "note": "No eligible projects match this segment."}
-    pid_set = {p.id for p in projects}
 
     if not force:
-        # Only *research* findings count as "already researched" — the registry base is always
-        # present, so it must not short-circuit a deep-research run.
+        # Only *research* findings count as "already researched" (the registry base is always
+        # present). Check the WHOLE segment, not just the top-N run window, so a pre-seeded
+        # example never re-triggers a live run just because its projects aren't the highest-issued.
+        seg_ids = [row[0] for row in filter_svc.query_projects(db, f).with_entities(Project.id).all()]
         has_research = (db.query(BuyerProjectLink.id)
-                        .filter(BuyerProjectLink.project_id.in_(pid_set),
-                                BuyerProjectLink.origin == "research").first())
+                        .filter(BuyerProjectLink.project_id.in_(seg_ids),
+                                BuyerProjectLink.origin == "research").first()) if seg_ids else None
         if has_research is not None:
             return {"status": "ready", "run_id": None, "note": None}
 

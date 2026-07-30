@@ -14,9 +14,11 @@ const CURRENT_YEAR = 2026;
 const VINTAGE_YEARS = Array.from({ length: CURRENT_YEAR - 2015 + 1 }, (_, i) => 2015 + i);
 
 // Segments that ship with fully-researched buyer intelligence in the seed snapshot.
-const RESEARCHED = [
-  { country: "Malawi", project_type: "Afforestation/Reforestation", label: "Malawi · Afforestation/Reforestation" },
-  { country: "India", project_type: "Biochar", label: "India · Biochar" },
+type Over = { countries?: string[]; project_type?: string; project_types?: string[]; include_ineligible?: boolean };
+const RESEARCHED: { label: string; over: Over }[] = [
+  { label: "Malawi · Afforestation/Reforestation", over: { countries: ["Malawi"], project_type: "Afforestation/Reforestation", include_ineligible: true } },
+  { label: "India · Biochar", over: { countries: ["India"], project_type: "Biochar", include_ineligible: true } },
+  { label: "Agriculture & Methane · Global", over: { countries: [], project_types: ["Rice Emission Reductions", "Manure Methane Digester", "Sustainable Agriculture", "Feed Additives", "Nitrogen Management"], include_ineligible: true } },
 ];
 
 export default function Landing() {
@@ -39,13 +41,10 @@ export default function Landing() {
     api.stats().then(setStats).catch(() => {});
   }, []);
 
-  function analyze(
-    over?: { countries?: string[]; project_type?: string; include_ineligible?: boolean },
-    source: "registry" | "all" = "all",
-  ) {
+  function analyze(over?: Over, source: "registry" | "all" = "all") {
     const params = new URLSearchParams();
     const cs = over?.countries ?? countries;
-    const ts = over?.project_type ? [over.project_type] : types;
+    const ts = over?.project_types ?? (over?.project_type ? [over.project_type] : types);
     if (cs.length) params.set("countries", cs.join(","));
     if (ts.length) params.set("project_types", ts.join(","));
     if (registry) params.set("registry", registry);
@@ -170,7 +169,7 @@ export default function Landing() {
           {RESEARCHED.map((s) => (
             <button
               key={s.label}
-              onClick={() => analyze({ countries: [s.country], project_type: s.project_type, include_ineligible: true })}
+              onClick={() => analyze(s.over, "all")}
               className="inline-flex items-center gap-2 rounded-full border bg-card px-4 py-2 text-sm font-medium shadow-sm hover:bg-muted"
             >
               <Sparkles size={14} className="text-primary" /> {s.label} <ArrowRight size={14} />
